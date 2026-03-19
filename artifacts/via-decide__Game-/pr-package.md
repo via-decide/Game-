@@ -1,3 +1,9 @@
+Branch: simba/implement-a-strict-zero-trust-server-validation-
+Title: Implement a strict, zero-trust server validation layer called via-ser...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Establish a completely secure and fair multiplayer environment. By enforcing strict server-side authority and mathematical validation of all client claims, the engine guarantees competitive integrity and makes the most common forms of game hacking practically impossible.
 Branch: simba/implement-a-highly-scalable-gpu-driven-particle-
 Title: Implement a highly scalable, GPU-driven particle engine called via-vf...
 
