@@ -146,16 +146,6 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
   const weatherRef = useRef(weather);
   const progressRef = useRef(progress);
 
-  useEffect(() => {
-    isBurningRef.current = isBurning;
-    createStatusParticles();
-  }, [isBurning]);
-
-  useEffect(() => {
-    hasPestsRef.current = hasPests;
-    createStatusParticles();
-  }, [hasPests]);
-
   // Particle System for Weather
   const createWeatherParticles = (type: WeatherType) => {
     const scene = sceneRef.current;
@@ -299,22 +289,31 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
     }
 
     if (isBurning) {
-      const count = 100;
+      const count = 150;
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(count * 3);
-      for (let i = 0; i < count * 3; i += 3) {
-        positions[i] = (Math.random() - 0.5) * 1;
-        positions[i + 1] = Math.random() * 2;
-        positions[i + 2] = (Math.random() - 0.5) * 1;
+      const sizes = new Float32Array(count);
+      
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        positions[i3] = (Math.random() - 0.5) * 1.2;
+        positions[i3 + 1] = Math.random() * 2.5;
+        positions[i3 + 2] = (Math.random() - 0.5) * 1.2;
+        sizes[i] = Math.random();
       }
+      
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+      
       const material = new THREE.PointsMaterial({
-        color: 0xFF3D00,
-        size: 0.1,
+        color: 0xFF4500, // Orange Red
+        size: 0.08,
         transparent: true,
-        opacity: 0.6,
-        blending: THREE.AdditiveBlending
+        opacity: 0.4,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
       });
+      
       const points = new THREE.Points(geometry, material);
       scene.add(points);
       burningParticlesRef.current = points;
@@ -324,12 +323,19 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
   useEffect(() => {
     progressRef.current = progress;
     if (plantGroupRef.current) {
-      const scale = 1 + progress * 0.3; // Scale up to 30% within a stage
+      const scale = 1 + progress * 0.3;
       plantGroupRef.current.scale.set(scale, scale, scale);
     }
   }, [progress]);
 
+  useEffect(() => {
+    isBurningRef.current = isBurning;
+    createStatusParticles();
+  }, [isBurning, hasPests]); // Consolidate status updates
 
+  useEffect(() => {
+    hasPestsRef.current = hasPests;
+  }, [hasPests]);
 
   useEffect(() => {
     weatherRef.current = weather;
@@ -420,11 +426,11 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
           // Pulse emissive for burning effect
           plantGroupRef.current.traverse((obj) => {
             if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshStandardMaterial) {
-              obj.material.emissive.setHex(0xFF3D00);
-              obj.material.emissiveIntensity = 0.6 + Math.sin(time * 15) * 0.4;
+              obj.material.emissive.setHex(0xFF4500);
+              obj.material.emissiveIntensity = 0.4 + Math.sin(time * 25 + obj.id) * 0.3;
               // Darken the base color to look charred
               if (!obj.userData.originalColor) obj.userData.originalColor = obj.material.color.clone();
-              obj.material.color.lerp(new THREE.Color(0x212121), 0.05);
+              obj.material.color.lerp(new THREE.Color(0x111111), 0.02);
             }
           });
         } else if (hasPestsRef.current) {
