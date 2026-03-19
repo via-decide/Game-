@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GameState, Plant, GlobalUpgrades, Orchard, Tool, Weather } from './types';
-import { PLANT_STAGES, INITIAL_UPGRADES, SHOP_ITEMS, INITIAL_TOOLS, getRandomWeather } from './constants';
+import { PLANT_STAGES, INITIAL_UPGRADES, SHOP_ITEMS, INITIAL_TOOLS, getRandomWeather, BASE_PLANT_TYPES } from './constants';
 import PlantCard from './components/PlantCard';
 import PlantVisualizer from './components/PlantVisualizer';
 import { 
@@ -580,9 +580,12 @@ const App: React.FC = () => {
       const orchardIndex = newOrchards.findIndex(o => o.id === prev.activeOrchardId);
       const orchard = { ...newOrchards[orchardIndex] };
       const newPlants = [...orchard.plants];
+      
+      const randomType = BASE_PLANT_TYPES[Math.floor(Math.random() * BASE_PLANT_TYPES.length)];
+      
       newPlants[index] = {
         id: Math.random().toString(36).substr(2, 9),
-        type: 'Basic',
+        type: randomType.name,
         rootStrength: 0,
         water: 30,
         nutrients: 100,
@@ -592,8 +595,9 @@ const App: React.FC = () => {
         stageIndex: 0,
         isHarvestable: false,
         rarity: 'Common',
-        growthSpeedMultiplier: 1.0,
-        yieldMultiplier: 1.0,
+        growthSpeedMultiplier: randomType.baseGrowthSpeed,
+        yieldMultiplier: randomType.baseYield,
+        color: randomType.color,
       };
       orchard.plants = newPlants;
       newOrchards[orchardIndex] = orchard;
@@ -686,9 +690,30 @@ const App: React.FC = () => {
       let newRarityIdx = Math.floor((p1RarityIdx + p2RarityIdx) / 2);
       if (Math.random() < 0.2) newRarityIdx = Math.min(rarities.length - 1, newRarityIdx + 1);
       
+      const blendColors = (c1: string, c2: string) => {
+        try {
+          const r1 = parseInt(c1.slice(1, 3), 16);
+          const g1 = parseInt(c1.slice(3, 5), 16);
+          const b1 = parseInt(c1.slice(5, 7), 16);
+          const r2 = parseInt(c2.slice(1, 3), 16);
+          const g2 = parseInt(c2.slice(3, 5), 16);
+          const b2 = parseInt(c2.slice(5, 7), 16);
+          const r = Math.floor((r1 + r2) / 2).toString(16).padStart(2, '0');
+          const g = Math.floor((g1 + g2) / 2).toString(16).padStart(2, '0');
+          const b = Math.floor((b1 + b2) / 2).toString(16).padStart(2, '0');
+          return `#${r}${g}${b}`;
+        } catch (e) {
+          return '#4CAF50';
+        }
+      };
+
+      const p1Name = p1.type.includes('Hybrid') ? p1.type.split(' ')[1] : p1.type;
+      const p2Name = p2.type.includes('Hybrid') ? p2.type.split(' ')[1] : p2.type;
+      const hybridName = `Hybrid ${p1Name.split('-')[0]}-${p2Name.split('-')[0]}`;
+
       const newPlant: Plant = {
         id: Math.random().toString(36).substr(2, 9),
-        type: `Hybrid ${p1.type.split(' ')[0]}-${p2.type.split(' ')[0]}`,
+        type: hybridName,
         rootStrength: 0,
         water: 50,
         nutrients: 100,
@@ -698,8 +723,9 @@ const App: React.FC = () => {
         stageIndex: 0,
         isHarvestable: false,
         rarity: rarities[newRarityIdx],
-        growthSpeedMultiplier: (p1.growthSpeedMultiplier + p2.growthSpeedMultiplier) / 2 * (1 + (Math.random() * 0.2 - 0.1)),
-        yieldMultiplier: (p1.yieldMultiplier + p2.yieldMultiplier) / 2 * (1 + (Math.random() * 0.2 - 0.1)),
+        growthSpeedMultiplier: (p1.growthSpeedMultiplier + p2.growthSpeedMultiplier) / 2 * (1 + (Math.random() * 0.3 - 0.15)),
+        yieldMultiplier: (p1.yieldMultiplier + p2.yieldMultiplier) / 2 * (1 + (Math.random() * 0.3 - 0.15)),
+        color: blendColors(p1.color || '#4CAF50', p2.color || '#4CAF50'),
       };
 
       newPlants[emptySlot] = newPlant;
@@ -867,8 +893,24 @@ const App: React.FC = () => {
               >
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-bark-brown pb-6">
                   <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-white/10 text-text-primary">
+                        {selectedPlant.type}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded bg-black/40 
+                        ${selectedPlant.rarity === 'Legendary' ? 'text-mineral-gold' : 
+                          selectedPlant.rarity === 'Epic' ? 'text-violet-400' : 
+                          selectedPlant.rarity === 'Rare' ? 'text-water-blue' : 
+                          selectedPlant.rarity === 'Uncommon' ? 'text-leaf-green' : 'text-text-secondary'}`}
+                      >
+                        {selectedPlant.rarity}
+                      </span>
+                    </div>
                     <h3 className="text-2xl md:text-3xl font-bold font-serif italic">{PLANT_STAGES[selectedPlant.stageIndex].name}</h3>
                     <p className="text-xs text-text-secondary font-mono tracking-wider">TELEMETRY ID: {selectedPlant.id}</p>
+                    <p className="text-xs text-text-secondary mt-2 italic max-w-md">
+                      {BASE_PLANT_TYPES.find(t => t.name === selectedPlant.type)?.description || 'A complex genetic cross between two distinct species.'}
+                    </p>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="px-4 py-1.5 rounded-full bg-leaf-green/10 border border-leaf-green/30 text-leaf-green text-[10px] font-bold uppercase tracking-widest">
@@ -894,6 +936,8 @@ const App: React.FC = () => {
                         <PlantVisualizer 
                           stageIndex={selectedPlant.stageIndex} 
                           progress={progress}
+                          type={selectedPlant.type}
+                          color={selectedPlant.color}
                           hasPests={selectedPlant.pests > 0}
                           isBurning={selectedPlant.stress > 90}
                           weather={state.weather.type}

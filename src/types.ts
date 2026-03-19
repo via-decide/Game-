@@ -25,6 +25,7 @@ export type Plant = {
   rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary';
   growthSpeedMultiplier: number;
   yieldMultiplier: number;
+  color?: string;
 };
 
 export type GlobalUpgrades = {

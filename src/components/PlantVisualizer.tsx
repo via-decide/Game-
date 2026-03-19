@@ -6,88 +6,115 @@ import { WeatherType } from '../types';
 interface PlantVisualizerProps {
   stageIndex: number;
   progress: number; // 0 to 1
+  type?: string;
+  color?: string;
   isBurning?: boolean;
   hasPests?: boolean;
   weather?: WeatherType;
 }
 
-const createPlantModel = (index: number) => {
+const createPlantModel = (index: number, progress: number, type: string = 'Basic', plantColor: string = '#4CAF50') => {
   const group = new THREE.Group();
+  const leafColor = new THREE.Color(plantColor);
   
+  // Adjust color based on progress (maturing)
+  const hsl = { h: 0, s: 0, l: 0 };
+  leafColor.getHSL(hsl);
+  leafColor.setHSL(hsl.h, hsl.s, hsl.l + (progress * 0.1));
+
+  const stemThickness = (0.05 + (index * 0.03)) * (1 + progress * 0.5);
+  const stemHeight = (0.6 + (index * 0.4)) * (1 + progress * 0.2);
+
+  // Type-specific adjustments
+  let trunkColor = 0x795548; // Default brown
+  if (type === 'Neon-Vine') trunkColor = 0x1B5E20;
+  if (type === 'Quartz-Fern') trunkColor = 0x90A4AE;
+  if (type === 'Shadow-Fungi') trunkColor = 0x311B92;
+  if (type === 'Cryo-Lily') trunkColor = 0x81D4FA;
+  if (type === 'Plasma-Orchid') trunkColor = 0xAD1457;
+  if (type === 'Void-Willow') trunkColor = 0x212121;
+  if (type === 'Xero-Cactus') trunkColor = 0x33691E;
+
   // Stage 0: Seed
   if (index === 0) {
-    const geometry = new THREE.SphereGeometry(0.3, 16, 16);
-    const material = new THREE.MeshStandardMaterial({ color: 0x5D4037 });
+    const geometry = type === 'Quartz-Fern' ? new THREE.IcosahedronGeometry(0.3, 0) : new THREE.SphereGeometry(0.3, 16, 16);
+    const material = new THREE.MeshStandardMaterial({ color: trunkColor });
     const seed = new THREE.Mesh(geometry, material);
     seed.scale.y = 0.8;
-    seed.position.y = 0.2;
+    seed.position.y = 0.2 + (progress * 0.1);
     group.add(seed);
   }
-  // Stage 1: Sprout
-  else if (index === 1) {
-    const stemGeom = new THREE.CylinderGeometry(0.05, 0.05, 0.6, 8);
-    const stemMat = new THREE.MeshStandardMaterial({ color: 0x689F38 });
-    const stem = new THREE.Mesh(stemGeom, stemMat);
-    stem.position.y = 0.3;
-    group.add(stem);
-
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x4CAF50 });
-    const leaf1 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), leafMat);
-    leaf1.scale.set(1, 0.2, 1);
-    leaf1.position.set(0.15, 0.5, 0);
-    leaf1.rotation.z = -0.4;
-    
-    const leaf2 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), leafMat);
-    leaf2.scale.set(1, 0.2, 1);
-    leaf2.position.set(-0.15, 0.4, 0);
-    leaf2.rotation.z = 0.4;
-    
-    group.add(leaf1, leaf2);
-  }
-  // Stage 2: Sapling
-  else if (index === 2) {
-    const trunkGeom = new THREE.CylinderGeometry(0.08, 0.12, 1.2, 8);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x795548 });
-    const trunk = new THREE.Mesh(trunkGeom, trunkMat);
-    trunk.position.y = 0.6;
-    group.add(trunk);
-
-    const canopy = new THREE.Mesh(
-      new THREE.SphereGeometry(0.5, 12, 12),
-      new THREE.MeshStandardMaterial({ color: 0x43A047 })
-    );
-    canopy.position.y = 1.3;
-    group.add(canopy);
-  }
-  // Stage 3: Young Tree
-  else if (index === 3) {
-    const trunkGeom = new THREE.CylinderGeometry(0.15, 0.25, 1.8, 12);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5D4037 });
-    const trunk = new THREE.Mesh(trunkGeom, trunkMat);
-    trunk.position.y = 0.9;
-    group.add(trunk);
-
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x2E7D32 });
-    const c1 = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 12), leafMat);
-    c1.position.set(0, 1.8, 0);
-    const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), leafMat);
-    c2.position.set(0.4, 1.5, 0.3);
-    const c3 = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), leafMat);
-    c3.position.set(-0.4, 1.5, -0.3);
-    group.add(c1, c2, c3);
-  }
-  // Stage 4: Mature Tree
+  // Stage 1-4: Growth
   else {
-    const trunkGeom = new THREE.CylinderGeometry(0.2, 0.4, 2.5, 16);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3E2723 });
+    // Trunk/Stem
+    const trunkRadiusTop = stemThickness * (type === 'Xero-Cactus' ? 2 : type === 'Aether-Grass' ? 0.5 : 1);
+    const trunkRadiusBottom = trunkRadiusTop * 1.5;
+    const trunkGeom = new THREE.CylinderGeometry(trunkRadiusTop, trunkRadiusBottom, stemHeight, 8);
+    const trunkMat = new THREE.MeshStandardMaterial({ 
+      color: trunkColor,
+      emissive: (type === 'Neon-Vine' || type === 'Plasma-Orchid') ? trunkColor : 0x000000,
+      emissiveIntensity: 0.5
+    });
     const trunk = new THREE.Mesh(trunkGeom, trunkMat);
-    trunk.position.y = 1.25;
+    trunk.position.y = stemHeight / 2;
     group.add(trunk);
 
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x1B5E20 });
-    const canopy = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), leafMat);
-    canopy.position.y = 2.8;
-    group.add(canopy);
+    // Leaves/Canopy
+    const leafMat = new THREE.MeshStandardMaterial({ 
+      color: leafColor,
+      transparent: type === 'Aether-Grass' || type === 'Cryo-Lily',
+      opacity: type === 'Aether-Grass' ? 0.6 : 0.9,
+      emissive: (type === 'Neon-Vine' || type === 'Solar-Bloom') ? leafColor : 0x000000,
+      emissiveIntensity: 0.3
+    });
+
+    const leafCount = (index * 2) + (type === 'Aether-Grass' ? 6 : type === 'Xero-Cactus' ? 0 : 2);
+    
+    if (type === 'Shadow-Fungi') {
+      // Mushroom cap
+      const capGeom = new THREE.ConeGeometry(0.5 * index, 0.3 * index, 16);
+      const cap = new THREE.Mesh(capGeom, leafMat);
+      cap.position.y = stemHeight;
+      group.add(cap);
+    } else if (type === 'Xero-Cactus') {
+      // Spines instead of leaves
+      for (let i = 0; i < 12; i++) {
+        const spine = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.02), new THREE.MeshStandardMaterial({ color: 0xFFFFFF }));
+        const angle = (i / 12) * Math.PI * 2;
+        spine.position.set(Math.cos(angle) * trunkRadiusTop, (Math.random() * stemHeight), Math.sin(angle) * trunkRadiusTop);
+        spine.rotation.z = Math.random() * Math.PI;
+        group.add(spine);
+      }
+    } else {
+      for (let i = 0; i < leafCount; i++) {
+        let leafGeom;
+        if (type === 'Quartz-Fern' || type === 'Cryo-Lily') {
+          leafGeom = new THREE.IcosahedronGeometry(0.2 * (1 + progress * 0.5), 0);
+        } else if (type === 'Aether-Grass') {
+          leafGeom = new THREE.BoxGeometry(0.05, 0.8 * (1 + progress), 0.01);
+        } else {
+          leafGeom = new THREE.SphereGeometry(0.2 * (1 + progress * 0.5), 8, 8);
+        }
+
+        const leaf = new THREE.Mesh(leafGeom, leafMat);
+        const angle = (i / leafCount) * Math.PI * 2;
+        const dist = trunkRadiusTop + (0.1 * index);
+        
+        if (type === 'Aether-Grass') {
+          leaf.position.set(Math.cos(angle) * 0.1, stemHeight, Math.sin(angle) * 0.1);
+          leaf.rotation.x = 0.2;
+          leaf.rotation.y = angle;
+        } else if (type === 'Void-Willow') {
+          leaf.position.set(Math.cos(angle) * dist * 2, stemHeight - (Math.random() * 0.5), Math.sin(angle) * dist * 2);
+          leaf.scale.set(1, 2, 0.5);
+        } else {
+          leaf.position.set(Math.cos(angle) * dist, (stemHeight * 0.6) + (Math.random() * stemHeight * 0.4), Math.sin(angle) * dist);
+          leaf.scale.set(1, 0.3, 1);
+          leaf.rotation.z = angle;
+        }
+        group.add(leaf);
+      }
+    }
   }
 
   return group;
@@ -96,6 +123,8 @@ const createPlantModel = (index: number) => {
 const PlantVisualizer: React.FC<PlantVisualizerProps> = ({ 
   stageIndex, 
   progress,
+  type = 'Basic',
+  color,
   isBurning = false, 
   hasPests = false,
   weather = 'clear'
@@ -106,7 +135,10 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const plantGroupRef = useRef<THREE.Group | null>(null);
   const dirLightRef = useRef<THREE.DirectionalLight | null>(null);
-  const particlesRef = useRef<THREE.Points | null>(null);
+  const weatherParticlesRef = useRef<THREE.Points | null>(null);
+  const pestParticlesRef = useRef<THREE.Points | null>(null);
+  const pestMeshesRef = useRef<THREE.Group | null>(null);
+  const burningParticlesRef = useRef<THREE.Points | null>(null);
 
   // Use refs for props to avoid stale closures in the animation loop
   const isBurningRef = useRef(isBurning);
@@ -116,22 +148,24 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
 
   useEffect(() => {
     isBurningRef.current = isBurning;
+    createStatusParticles();
   }, [isBurning]);
 
   useEffect(() => {
     hasPestsRef.current = hasPests;
+    createStatusParticles();
   }, [hasPests]);
 
   // Particle System for Weather
-  const createParticles = (type: WeatherType) => {
+  const createWeatherParticles = (type: WeatherType) => {
     const scene = sceneRef.current;
     if (!scene) return;
 
-    if (particlesRef.current) {
-      scene.remove(particlesRef.current);
-      particlesRef.current.geometry.dispose();
-      (particlesRef.current.material as THREE.Material).dispose();
-      particlesRef.current = null;
+    if (weatherParticlesRef.current) {
+      scene.remove(weatherParticlesRef.current);
+      weatherParticlesRef.current.geometry.dispose();
+      (weatherParticlesRef.current.material as THREE.Material).dispose();
+      weatherParticlesRef.current = null;
     }
 
     if (type === 'rain' || type === 'storm') {
@@ -152,7 +186,138 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
       });
       const points = new THREE.Points(geometry, material);
       scene.add(points);
-      particlesRef.current = points;
+      weatherParticlesRef.current = points;
+    } else if (type === 'heatwave') {
+      // Heat haze particles
+      const count = 200;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 4;
+        positions[i + 1] = Math.random() * 4;
+        positions[i + 2] = (Math.random() - 0.5) * 4;
+      }
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({
+        color: 0xFFCC80,
+        size: 0.15,
+        transparent: true,
+        opacity: 0.2,
+        blending: THREE.AdditiveBlending
+      });
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
+      weatherParticlesRef.current = points;
+    } else if (type === 'fog') {
+      const count = 500;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 15;
+        positions[i + 1] = Math.random() * 3;
+        positions[i + 2] = (Math.random() - 0.5) * 15;
+      }
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({
+        color: 0xFFFFFF,
+        size: 0.4,
+        transparent: true,
+        opacity: 0.1,
+      });
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
+      weatherParticlesRef.current = points;
+    }
+  };
+
+  const createStatusParticles = () => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    // Pests
+    if (pestParticlesRef.current) {
+      scene.remove(pestParticlesRef.current);
+      pestParticlesRef.current.geometry.dispose();
+      (pestParticlesRef.current.material as THREE.Material).dispose();
+      pestParticlesRef.current = null;
+    }
+    if (pestMeshesRef.current) {
+      scene.remove(pestMeshesRef.current);
+      pestMeshesRef.current.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry.dispose();
+          (obj.material as THREE.Material).dispose();
+        }
+      });
+      pestMeshesRef.current = null;
+    }
+
+    if (hasPests) {
+      // Swarm particles
+      const count = 40;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 1.5;
+        positions[i + 1] = Math.random() * 2;
+        positions[i + 2] = (Math.random() - 0.5) * 1.5;
+      }
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({
+        color: 0x1B5E20,
+        size: 0.05,
+        transparent: true,
+        opacity: 0.6,
+      });
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
+      pestParticlesRef.current = points;
+
+      // "Hero" insect meshes
+      const insectGroup = new THREE.Group();
+      const insectGeom = new THREE.SphereGeometry(0.03, 4, 4);
+      const insectMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x1B5E20 });
+      
+      for (let i = 0; i < 5; i++) {
+        const insect = new THREE.Mesh(insectGeom, insectMat);
+        // Random starting positions
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 0.5 + Math.random() * 0.5;
+        insect.position.set(Math.cos(angle) * radius, 0.5 + Math.random() * 1.5, Math.sin(angle) * radius);
+        insectGroup.add(insect);
+      }
+      scene.add(insectGroup);
+      pestMeshesRef.current = insectGroup;
+    }
+
+    // Burning
+    if (burningParticlesRef.current) {
+      scene.remove(burningParticlesRef.current);
+      burningParticlesRef.current.geometry.dispose();
+      (burningParticlesRef.current.material as THREE.Material).dispose();
+      burningParticlesRef.current = null;
+    }
+
+    if (isBurning) {
+      const count = 100;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 1;
+        positions[i + 1] = Math.random() * 2;
+        positions[i + 2] = (Math.random() - 0.5) * 1;
+      }
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({
+        color: 0xFF3D00,
+        size: 0.1,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending
+      });
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
+      burningParticlesRef.current = points;
     }
   };
 
@@ -168,7 +333,7 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
 
   useEffect(() => {
     weatherRef.current = weather;
-    createParticles(weather);
+    createWeatherParticles(weather);
   }, [weather]);
 
   useEffect(() => {
@@ -223,47 +388,159 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
     scene.add(soilMesh);
 
     // Initial Plant
-    const plantGroup = createPlantModel(stageIndex);
+    const plantGroup = createPlantModel(stageIndex, progress, type, color);
     scene.add(plantGroup);
     plantGroupRef.current = plantGroup;
 
     // Initial particles
-    createParticles(weather);
+    createWeatherParticles(weather);
+    createStatusParticles();
 
     // Animation loop
     let frameId: number;
+    let time = 0;
     const animate = () => {
       frameId = requestAnimationFrame(animate);
+      time += 0.01;
+
       if (plantGroupRef.current) {
-        plantGroupRef.current.rotation.y += 0.015;
+        // Dynamic rotation speed based on type
+        const rotSpeed = type === 'Plasma-Orchid' ? 0.03 : type === 'Gravity-Root' ? 0.005 : 0.015;
+        plantGroupRef.current.rotation.y += rotSpeed;
         
         // Visual effects based on state
         if (isBurningRef.current) {
-          plantGroupRef.current.position.x = (Math.random() - 0.5) * 0.03;
+          // Heat shimmer / jitter
+          plantGroupRef.current.position.x = Math.sin(time * 50) * 0.02;
+          plantGroupRef.current.position.z = Math.cos(time * 40) * 0.02;
+          plantGroupRef.current.scale.setScalar((1 + progress * 0.3) * (1 + Math.sin(time * 20) * 0.01));
+          
           dirLightRef.current?.color.setHex(0xFF5252);
+          
+          // Pulse emissive for burning effect
+          plantGroupRef.current.traverse((obj) => {
+            if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshStandardMaterial) {
+              obj.material.emissive.setHex(0xFF3D00);
+              obj.material.emissiveIntensity = 0.6 + Math.sin(time * 15) * 0.4;
+              // Darken the base color to look charred
+              if (!obj.userData.originalColor) obj.userData.originalColor = obj.material.color.clone();
+              obj.material.color.lerp(new THREE.Color(0x212121), 0.05);
+            }
+          });
         } else if (hasPestsRef.current) {
           plantGroupRef.current.position.x = 0;
+          plantGroupRef.current.position.z = 0;
           dirLightRef.current?.color.setHex(0xB2FF59);
+          
+          // Subtle green pulse for pests
+          plantGroupRef.current.traverse((obj) => {
+            if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshStandardMaterial) {
+              obj.material.emissive.setHex(0x2E7D32);
+              obj.material.emissiveIntensity = 0.2 + Math.sin(time * 5) * 0.1;
+              // Restore color if it was charred
+              if (obj.userData.originalColor) obj.material.color.lerp(obj.userData.originalColor, 0.1);
+            }
+          });
         } else {
           plantGroupRef.current.position.x = 0;
+          plantGroupRef.current.position.z = 0;
           // Weather Lighting
           if (weatherRef.current === 'clear') dirLightRef.current?.color.setHex(0xFFFDE7);
           else if (weatherRef.current === 'rain' || weatherRef.current === 'storm') dirLightRef.current?.color.setHex(0x90CAF9);
-          else if (weatherRef.current === 'heatwave') dirLightRef.current?.color.setHex(0xFFCC80);
+          else if (weatherRef.current === 'heatwave') {
+            dirLightRef.current?.color.setHex(0xFFCC80);
+            // Heat shimmer even if not burning
+            plantGroupRef.current.position.x = Math.sin(time * 10) * 0.01;
+          }
           else if (weatherRef.current === 'fog') dirLightRef.current?.color.setHex(0xE0E0E0);
           else dirLightRef.current?.color.setHex(0xffffff);
+
+          // Reset emissive if not burning/pests
+          plantGroupRef.current.traverse((obj) => {
+            if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshStandardMaterial) {
+              // Restore color if it was charred
+              if (obj.userData.originalColor) obj.material.color.lerp(obj.userData.originalColor, 0.1);
+
+              // Only reset if it wasn't already emissive by default (like Neon-Vine)
+              if (type !== 'Neon-Vine' && type !== 'Plasma-Orchid' && type !== 'Solar-Bloom') {
+                obj.material.emissive.setHex(0x000000);
+                obj.material.emissiveIntensity = 0;
+              }
+            }
+          });
         }
       }
 
-      // Animate Particles
-      if (particlesRef.current) {
-        const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-        const speed = weatherRef.current === 'storm' ? 0.2 : 0.1;
-        for (let i = 1; i < positions.length; i += 3) {
-          positions[i] -= speed;
-          if (positions[i] < 0) positions[i] = 10;
+      // Animate Weather Particles
+      if (weatherParticlesRef.current) {
+        const positions = weatherParticlesRef.current.geometry.attributes.position.array as Float32Array;
+        if (weatherRef.current === 'rain' || weatherRef.current === 'storm') {
+          const speed = weatherRef.current === 'storm' ? 0.25 : 0.15;
+          for (let i = 1; i < positions.length; i += 3) {
+            positions[i] -= speed;
+            // Add some horizontal drift
+            positions[i-1] += Math.sin(time + i) * 0.01;
+            if (positions[i] < 0) {
+              positions[i] = 10;
+              positions[i-1] = (Math.random() - 0.5) * 10;
+            }
+          }
+        } else if (weatherRef.current === 'heatwave') {
+          for (let i = 1; i < positions.length; i += 3) {
+            positions[i] += 0.02;
+            positions[i-1] += Math.sin(time * 2 + i) * 0.02;
+            if (positions[i] > 4) positions[i] = 0;
+          }
+        } else if (weatherRef.current === 'fog') {
+          for (let i = 0; i < positions.length; i += 3) {
+            positions[i] += Math.sin(time * 0.3 + i) * 0.008;
+            positions[i+2] += Math.cos(time * 0.3 + i) * 0.008;
+          }
         }
-        particlesRef.current.geometry.attributes.position.needsUpdate = true;
+        weatherParticlesRef.current.geometry.attributes.position.needsUpdate = true;
+      }
+
+      // Animate Pest Particles
+      if (pestParticlesRef.current) {
+        const positions = pestParticlesRef.current.geometry.attributes.position.array as Float32Array;
+        for (let i = 0; i < positions.length; i += 3) {
+          positions[i] += (Math.random() - 0.5) * 0.08;
+          positions[i+1] += (Math.random() - 0.5) * 0.08;
+          positions[i+2] += (Math.random() - 0.5) * 0.08;
+          
+          // Keep them near the plant
+          if (Math.abs(positions[i]) > 1.2) positions[i] *= 0.8;
+          if (positions[i+1] < 0.2 || positions[i+1] > 2.2) positions[i+1] = 1;
+          if (Math.abs(positions[i+2]) > 1.2) positions[i+2] *= 0.8;
+        }
+        pestParticlesRef.current.geometry.attributes.position.needsUpdate = true;
+      }
+
+      // Animate Pest Meshes
+      if (pestMeshesRef.current) {
+        pestMeshesRef.current.children.forEach((insect, idx) => {
+          const speed = 1 + idx * 0.2;
+          const radius = 0.6 + Math.sin(time * speed + idx) * 0.2;
+          insect.position.x = Math.cos(time * speed + idx) * radius;
+          insect.position.z = Math.sin(time * speed + idx) * radius;
+          insect.position.y += Math.sin(time * 3 + idx) * 0.01;
+        });
+      }
+
+      // Animate Burning Particles
+      if (burningParticlesRef.current) {
+        const positions = burningParticlesRef.current.geometry.attributes.position.array as Float32Array;
+        for (let i = 1; i < positions.length; i += 3) {
+          positions[i] += 0.03;
+          positions[i-1] += (Math.random() - 0.5) * 0.02;
+          positions[i+1] += (Math.random() - 0.5) * 0.02;
+          if (positions[i] > 3) {
+            positions[i] = 0;
+            positions[i-1] = (Math.random() - 0.5) * 0.5;
+            positions[i+1] = (Math.random() - 0.5) * 0.5;
+          }
+        }
+        burningParticlesRef.current.geometry.attributes.position.needsUpdate = true;
       }
 
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -282,15 +559,15 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
     };
   }, []);
 
-  // Update model when stage changes
+  // Update model when stage, progress, type or color changes
   useEffect(() => {
     if (sceneRef.current && plantGroupRef.current) {
       sceneRef.current.remove(plantGroupRef.current);
-      const newPlant = createPlantModel(stageIndex);
+      const newPlant = createPlantModel(stageIndex, progress, type, color);
       sceneRef.current.add(newPlant);
       plantGroupRef.current = newPlant;
     }
-  }, [stageIndex]);
+  }, [stageIndex, progress, type, color]);
 
   return (
     <div 

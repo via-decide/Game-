@@ -105,6 +105,94 @@ export const RARITY_COLORS = {
 export const BREEDING_COST = 100;
 export const MUTATION_CHANCE = 0.1;
 
+export type BasePlantType = {
+  name: string;
+  baseGrowthSpeed: number;
+  baseYield: number;
+  description: string;
+  color: string;
+};
+
+export const BASE_PLANT_TYPES: BasePlantType[] = [
+  {
+    name: 'Basic',
+    baseGrowthSpeed: 1.0,
+    baseYield: 1.0,
+    description: 'A standard genetically modified sprout.',
+    color: '#388E3C',
+  },
+  {
+    name: 'Xero-Cactus',
+    baseGrowthSpeed: 0.7,
+    baseYield: 1.2,
+    description: 'Resilient to heat and low water, but grows slowly.',
+    color: '#827717',
+  },
+  {
+    name: 'Neon-Vine',
+    baseGrowthSpeed: 1.5,
+    baseYield: 0.8,
+    description: 'Rapid growth patterns with bioluminescent properties.',
+    color: '#00E676',
+  },
+  {
+    name: 'Quartz-Fern',
+    baseGrowthSpeed: 0.5,
+    baseYield: 2.5,
+    description: 'Slow growth, but yields high-value mineral data.',
+    color: '#B2EBF2',
+  },
+  {
+    name: 'Shadow-Fungi',
+    baseGrowthSpeed: 1.2,
+    baseYield: 1.1,
+    description: 'Thrives in low light, resistant to common pests.',
+    color: '#4527A0',
+  },
+  {
+    name: 'Solar-Bloom',
+    baseGrowthSpeed: 1.1,
+    baseYield: 1.5,
+    description: 'Absorbs high amounts of radiation for energy.',
+    color: '#FFD600',
+  },
+  {
+    name: 'Cryo-Lily',
+    baseGrowthSpeed: 0.6,
+    baseYield: 2.2,
+    description: 'Endothermic plant that thrives in sub-zero data streams.',
+    color: '#E1F5FE',
+  },
+  {
+    name: 'Plasma-Orchid',
+    baseGrowthSpeed: 1.8,
+    baseYield: 0.7,
+    description: 'High-energy flora with volatile growth patterns.',
+    color: '#FF4081',
+  },
+  {
+    name: 'Gravity-Root',
+    baseGrowthSpeed: 0.4,
+    baseYield: 3.5,
+    description: 'Dense molecular structure, extremely high data density.',
+    color: '#263238',
+  },
+  {
+    name: 'Aether-Grass',
+    baseGrowthSpeed: 2.5,
+    baseYield: 0.4,
+    description: 'Translucent blades that grow at light-speed.',
+    color: '#B2FF59',
+  },
+  {
+    name: 'Void-Willow',
+    baseGrowthSpeed: 1.0,
+    baseYield: 1.8,
+    description: 'Absorbs surrounding data noise to fuel its growth.',
+    color: '#212121',
+  }
+];
+
 export const getRandomWeather = (): Weather => {
   const types = Object.keys(WEATHER_TYPES) as WeatherType[];
   const type = types[Math.floor(Math.random() * types.length)];
