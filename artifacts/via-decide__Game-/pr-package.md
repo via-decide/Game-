@@ -4,6 +4,24 @@ Title: Implement a multithreaded AI routing module called via-worker-nav to ...
 ## Summary
 - Repo orchestration task for via-decide/Game-
 - Goal: Decouple complex AI routing from the main simulation thread. This allows the engine to autonomously navigate thousands of units across complex terrain simultaneously-ideal for RTS mechanics or dense NPC populations-without causing a single dropped frame or server tick delay.
+Branch: simba/implement-a-via-spatial-partitioning-module-util
+Title: Implement a via-spatial-partitioning module utilizing a Dynamic Spati...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Eliminate the exponential O(N^2) bottleneck of standard collision checking. This foundational physics upgrade allows the engine to effortlessly simulate tens of thousands of dynamic rigidbodies, complex bullet-hell mechanics, or dense crowds without degrading the server tick rate or client frame rate.
+Branch: simba/implement-a-strict-data-oriented-entity-componen
+Title: Implement a strict, data-oriented Entity-Component-System (ECS) archi...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Re-architect the fundamental engine structure into a highly scalable ECS. This guarantees predictable, high frame rates even when rendering or simulating tens of thousands of simultaneous entities (e.g., massive particle systems, swarms of AI, or complex physics interactions) on lower-end devices.
+Branch: simba/implement-a-core-multiplayer-networking-module-c
+Title: Implement a core multiplayer networking module called via-state-repli...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Upgrade the Game- architecture to support a robust, highly optimized multiplayer environment capable of handling massive concurrent player interactions. This establishes the foundational netcode required for real-time, competitive, or cooperative gameplay with zero perceived latency and absolute protection against desyncs.
 
 ## Testing Checklist
 - [ ] Run unit/integration tests
