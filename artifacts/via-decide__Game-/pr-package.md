@@ -1,3 +1,9 @@
+Branch: simba/implement-a-data-driven-skeletal-animation-and-b
+Title: Implement a data-driven skeletal animation and blending pipeline call...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Introduce fluid, responsive, and highly optimized character animations. By pushing the heavy lifting of vertex skinning to the GPU and standardizing state transitions via a graph, the engine can animate thousands of complex characters simultaneously without degrading the locked simulation tick rate.
 Branch: simba/implement-a-secure-isolated-scripting-engine-cal
 Title: Implement a secure, isolated scripting engine called via-modding-sand...
 
