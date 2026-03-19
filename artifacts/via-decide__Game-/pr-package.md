@@ -1,3 +1,9 @@
+Branch: simba/implement-a-multithreaded-ai-routing-module-call
+Title: Implement a multithreaded AI routing module called via-worker-nav to ...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Decouple complex AI routing from the main simulation thread. This allows the engine to autonomously navigate thousands of units across complex terrain simultaneously-ideal for RTS mechanics or dense NPC populations-without causing a single dropped frame or server tick delay.
 Branch: simba/implement-a-via-spatial-partitioning-module-util
 Title: Implement a via-spatial-partitioning module utilizing a Dynamic Spati...
 
