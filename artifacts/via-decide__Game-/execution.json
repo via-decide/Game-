@@ -2,6 +2,7 @@
   "repo": "via-decide/Game-",
   "mode": "codex_then_antigravity",
   "branch": "simba/implement-a-strict-data-oriented-entity-componen",
+  "branch": "simba/implement-a-core-multiplayer-networking-module-c",
   "files_to_create": [
     "codex-task.md",
     "antigravity-repair-task.md",
