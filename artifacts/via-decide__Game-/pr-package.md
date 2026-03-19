@@ -1,3 +1,9 @@
+Branch: simba/implement-a-secure-isolated-scripting-engine-cal
+Title: Implement a secure, isolated scripting engine called via-modding-sand...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Transform the engine into a highly extensible platform, similar to Roblox or Garry's Mod. By safely isolating untrusted user code, the engine can host infinitely diverse, community-driven game modes while maintaining absolute performance and server stability.
 Branch: simba/implement-a-dynamic-matchmaking-and-container-or
 Title: Implement a dynamic matchmaking and container orchestration layer cal...
 
