@@ -1,3 +1,9 @@
+Branch: simba/implement-a-custom-low-level-rendering-pipeline-
+Title: Implement a custom, low-level rendering pipeline called via-render-ba...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Eliminate client-side rendering bottlenecks by moving from a naive "painter's algorithm" to a modern, batched architecture. This allows the client to smoothly render the thousands of entities being processed by the ECS and Network modules at a locked 60 or 120 FPS, regardless of screen density.
 Branch: simba/implement-a-multithreaded-ai-routing-module-call
 Title: Implement a multithreaded AI routing module called via-worker-nav to ...
 
