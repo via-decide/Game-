@@ -425,6 +425,11 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
       color = 0xFFFFFF; // White/Silver for shears
       size = 0.06;
       opacity = 0.9;
+    } else if (effect === 'harvest') {
+      count = 1200;
+      color = 0xFFFFFF;
+      size = 0.1;
+      opacity = 1.0;
     }
 
     if (count > 0) {
@@ -822,6 +827,11 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
               positions[i] = (Math.random() - 0.5) * 1.5;
               positions[i + 2] = (Math.random() - 0.5) * 1.5;
             }
+          } else if (toolEffectRef.current === 'harvest') {
+            // Explode upwards
+            positions[i + 1] += 0.05;
+            positions[i] += (Math.random() - 0.5) * 0.1;
+            positions[i + 2] += (Math.random() - 0.5) * 0.1;
           } else {
             // Pulse effect - particles travel outwards
             const dist = Math.sqrt(positions[i]**2 + positions[i+2]**2);
