@@ -1,3 +1,9 @@
+Branch: simba/implement-a-deterministic-chunk-based-procedural
+Title: Implement a deterministic, chunk-based procedural generation engine c...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Unlock infinite scalability for the game world. By mathematically generating terrain and entities on the fly rather than relying on massive, hand-crafted level files, the engine can support seamless, boundless exploration with an absolute minimum footprint on disk size and network bandwidth.
 Branch: simba/implement-a-lightweight-asynchronous-analytics-s
 Title: Implement a lightweight, asynchronous analytics system called via-tel...
 
