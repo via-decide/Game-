@@ -1,3 +1,9 @@
+Branch: simba/implement-a-deterministic-constraints-solver-cal
+Title: Implement a deterministic constraints solver called via-physics-const...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Introduce complex mechanical interactions and highly realistic death states without importing bloated third-party physics libraries. By implementing a custom, DOD-friendly constraint solver, the engine can simulate swinging ropes, destructible vehicles, and dynamic ragdolls seamlessly across a massive multiplayer network.
 Branch: simba/implement-a-highly-scalable-player-identity-and-
 Title: Implement a highly scalable player identity and social graph microser...
 
