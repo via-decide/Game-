@@ -1,3 +1,9 @@
+Branch: simba/implement-a-non-blocking-asynchronous-asset-stre
+Title: Implement a non-blocking, asynchronous asset streaming pipeline calle...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Provide a robust, memory-safe foundation for streaming massive amounts of game data on the fly. This architecture allows the engine to support seamless, open-world level transitions and infinite scrolling environments without triggering loading screens or dropping below 60 FPS.
 Branch: simba/implement-a-deterministic-input-abstraction-laye
 Title: Implement a deterministic input abstraction layer called via-input-bu...
 
