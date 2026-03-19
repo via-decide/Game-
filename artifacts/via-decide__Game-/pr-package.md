@@ -1,3 +1,9 @@
+Branch: simba/implement-a-deterministic-replay-and-broadcastin
+Title: Implement a deterministic replay and broadcasting system called via-r...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Unlock the ability to share, spectate, and analyze matches with absolute precision. By leaning into the engine's deterministic DOD (Data-Oriented Design) architecture, you create an esports-ready broadcasting tool and killcam system with practically zero runtime overhead.
 Branch: simba/implement-a-deterministic-constraints-solver-cal
 Title: Implement a deterministic constraints solver called via-physics-const...
 
