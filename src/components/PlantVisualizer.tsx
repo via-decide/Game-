@@ -10,6 +10,7 @@ interface PlantVisualizerProps {
   color?: string;
   isBurning?: boolean;
   hasPests?: boolean;
+  stress?: number;
   weather?: WeatherType;
   toolEffect?: string | null;
 }
@@ -41,6 +42,7 @@ const createPlantModel = (index: number, progress: number, type: string = 'Basic
     const geometry = type === 'Quartz-Fern' ? new THREE.IcosahedronGeometry(0.3, 0) : new THREE.SphereGeometry(0.3, 16, 16);
     const material = new THREE.MeshStandardMaterial({ color: trunkColor });
     const seed = new THREE.Mesh(geometry, material);
+    seed.name = 'stem';
     seed.scale.y = 0.8;
     seed.position.y = 0.2 + (progress * 0.1);
     group.add(seed);
@@ -57,6 +59,7 @@ const createPlantModel = (index: number, progress: number, type: string = 'Basic
       emissiveIntensity: 0.5
     });
     const trunk = new THREE.Mesh(trunkGeom, trunkMat);
+    trunk.name = 'stem';
     trunk.position.y = stemHeight / 2;
     group.add(trunk);
 
@@ -75,6 +78,7 @@ const createPlantModel = (index: number, progress: number, type: string = 'Basic
       // Mushroom cap
       const capGeom = new THREE.ConeGeometry(0.5 * index, 0.3 * index, 16);
       const cap = new THREE.Mesh(capGeom, leafMat);
+      cap.name = 'leaf';
       cap.position.y = stemHeight;
       group.add(cap);
     } else if (type === 'Xero-Cactus') {
@@ -84,6 +88,7 @@ const createPlantModel = (index: number, progress: number, type: string = 'Basic
         const angle = (i / 12) * Math.PI * 2;
         spine.position.set(Math.cos(angle) * trunkRadiusTop, (Math.random() * stemHeight), Math.sin(angle) * trunkRadiusTop);
         spine.rotation.z = Math.random() * Math.PI;
+        spine.name = 'leaf';
         group.add(spine);
       }
     } else {
@@ -98,6 +103,7 @@ const createPlantModel = (index: number, progress: number, type: string = 'Basic
         }
 
         const leaf = new THREE.Mesh(leafGeom, leafMat);
+        leaf.name = 'leaf';
         const angle = (i / leafCount) * Math.PI * 2;
         const dist = trunkRadiusTop + (0.1 * index);
         
@@ -113,6 +119,9 @@ const createPlantModel = (index: number, progress: number, type: string = 'Basic
           leaf.scale.set(1, 0.3, 1);
           leaf.rotation.z = angle;
         }
+        // Store original position and rotation for animation
+        leaf.userData.originalRotation = leaf.rotation.clone();
+        leaf.userData.originalPosition = leaf.position.clone();
         group.add(leaf);
       }
     }
@@ -128,6 +137,7 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
   color,
   isBurning = false, 
   hasPests = false,
+  stress = 0,
   weather = 'clear',
   toolEffect = null
 }) => {
@@ -146,9 +156,19 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
   // Use refs for props to avoid stale closures in the animation loop
   const isBurningRef = useRef(isBurning);
   const hasPestsRef = useRef(hasPests);
+  const stressRef = useRef(stress);
   const weatherRef = useRef(weather);
   const progressRef = useRef(progress);
   const toolEffectRef = useRef(toolEffect);
+
+  useEffect(() => {
+    isBurningRef.current = isBurning;
+    hasPestsRef.current = hasPests;
+    stressRef.current = stress;
+    weatherRef.current = weather;
+    progressRef.current = progress;
+    toolEffectRef.current = toolEffect;
+  }, [isBurning, hasPests, stress, weather, progress, toolEffect]);
 
   // Particle System for Weather
   const createWeatherParticles = (type: WeatherType) => {
@@ -380,9 +400,9 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
       size = 0.05;
     } else if (effect === 'pruning-shears') {
       count = 600;
-      color = 0xE0E0E0;
-      size = 0.1;
-      opacity = 0.6;
+      color = 0xFFFFFF; // White/Silver for shears
+      size = 0.06;
+      opacity = 0.9;
     }
 
     if (count > 0) {
@@ -391,11 +411,19 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
       const velocities = new Float32Array(count * 3);
 
       for (let i = 0; i < count * 3; i += 3) {
-        if (effect === 'water' || effect === 'pruning-shears') {
+        if (effect === 'water') {
           positions[i] = (Math.random() - 0.5) * 2;
           positions[i + 1] = 4 + Math.random() * 2;
           positions[i + 2] = (Math.random() - 0.5) * 2;
           velocities[i + 1] = -0.1 - Math.random() * 0.1;
+        } else if (effect === 'pruning-shears') {
+          // Sparkles falling around the plant
+          positions[i] = (Math.random() - 0.5) * 1.5;
+          positions[i + 1] = 1 + Math.random() * 2;
+          positions[i + 2] = (Math.random() - 0.5) * 1.5;
+          velocities[i + 1] = -0.02 - Math.random() * 0.03;
+          velocities[i] = (Math.random() - 0.5) * 0.01;
+          velocities[i + 2] = (Math.random() - 0.5) * 0.01;
         } else if (effect === 'fertilize') {
           positions[i] = (Math.random() - 0.5) * 1.5;
           positions[i + 1] = Math.random() * 0.5;
@@ -529,6 +557,42 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
         const rotSpeed = type === 'Plasma-Orchid' ? 0.03 : type === 'Gravity-Root' ? 0.005 : 0.015;
         plantGroupRef.current.rotation.y += rotSpeed;
         
+        // Subtle swaying based on weather
+        const windStrength = weatherRef.current === 'storm' ? 0.15 : weatherRef.current === 'rain' ? 0.05 : 0.02;
+        const swayAmount = Math.sin(time * 1.5) * windStrength;
+        plantGroupRef.current.rotation.z = swayAmount;
+        plantGroupRef.current.rotation.x = Math.cos(time * 1.2) * (windStrength * 0.5);
+
+        // Animate leaves and stems
+        plantGroupRef.current.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (child.name === 'leaf') {
+              // Fluttering animation
+              const flutterSpeed = 2 + (child.id % 5) * 0.2;
+              const flutterAmount = 0.05 + (windStrength * 0.5);
+              child.rotation.x = (child.userData.originalRotation?.x || 0) + Math.sin(time * flutterSpeed) * flutterAmount;
+              
+              // Wilting effect based on stress
+              const wiltAngle = (stressRef.current / 100) * (Math.PI / 4);
+              child.rotation.x += wiltAngle;
+
+              // Color shift based on stress (yellowing/browning)
+              if (child.material instanceof THREE.MeshStandardMaterial) {
+                const baseColor = new THREE.Color(color || '#4CAF50');
+                const stressColor = new THREE.Color(0x8B4513); // Brown
+                const yellowColor = new THREE.Color(0xFFFF00); // Yellow
+                
+                let targetColor = baseColor.clone();
+                if (stressRef.current > 40) {
+                  const mixFactor = (stressRef.current - 40) / 60;
+                  targetColor.lerp(stressRef.current > 70 ? stressColor : yellowColor, mixFactor);
+                }
+                child.material.color.lerp(targetColor, 0.05);
+              }
+            }
+          }
+        });
+
         // Visual effects based on state
         if (isBurningRef.current) {
           // Heat shimmer / jitter
@@ -541,11 +605,13 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
           // Pulse emissive for burning effect
           plantGroupRef.current.traverse((obj) => {
             if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshStandardMaterial) {
-              obj.material.emissive.setHex(0xFF4500);
-              obj.material.emissiveIntensity = 0.4 + Math.sin(time * 25 + obj.id) * 0.3;
-              // Darken the base color to look charred
-              if (!obj.userData.originalColor) obj.userData.originalColor = obj.material.color.clone();
-              obj.material.color.lerp(new THREE.Color(0x111111), 0.02);
+              if (obj.name === 'stem') {
+                obj.material.emissive.setHex(0xFF4500);
+                obj.material.emissiveIntensity = 0.4 + Math.sin(time * 25 + obj.id) * 0.3;
+                // Darken the base color to look charred
+                if (!obj.userData.originalColor) obj.userData.originalColor = obj.material.color.clone();
+                obj.material.color.lerp(new THREE.Color(0x111111), 0.02);
+              }
             }
           });
         } else if (hasPestsRef.current) {
@@ -684,11 +750,17 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
           positions[i + 1] += velocities[i + 1];
           positions[i + 2] += velocities[i + 2];
 
-          if (toolEffectRef.current === 'water' || toolEffectRef.current === 'pruning-shears') {
+          if (toolEffectRef.current === 'water') {
             if (positions[i + 1] < 0) {
               positions[i + 1] = 4 + Math.random() * 2;
               positions[i] = (Math.random() - 0.5) * 2;
               positions[i + 2] = (Math.random() - 0.5) * 2;
+            }
+          } else if (toolEffectRef.current === 'pruning-shears') {
+            if (positions[i + 1] < 0) {
+              positions[i + 1] = 1 + Math.random() * 2;
+              positions[i] = (Math.random() - 0.5) * 1.5;
+              positions[i + 2] = (Math.random() - 0.5) * 1.5;
             }
           } else if (toolEffectRef.current === 'fertilize') {
             if (positions[i + 1] > 3) {

@@ -1035,6 +1035,7 @@ const App: React.FC = () => {
                           color={selectedPlant.color}
                           hasPests={selectedPlant.pests > 0}
                           isBurning={selectedPlant.stress > 90}
+                          stress={selectedPlant.stress}
                           weather={state.weather.type}
                           toolEffect={state.lastToolEffect}
                         />
