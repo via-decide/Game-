@@ -1,3 +1,9 @@
+Branch: simba/implement-a-strict-data-oriented-entity-componen
+Title: Implement a strict, data-oriented Entity-Component-System (ECS) archi...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Re-architect the fundamental engine structure into a highly scalable ECS. This guarantees predictable, high frame rates even when rendering or simulating tens of thousands of simultaneous entities (e.g., massive particle systems, swarms of AI, or complex physics interactions) on lower-end devices.
 Branch: simba/implement-a-core-multiplayer-networking-module-c
 Title: Implement a core multiplayer networking module called via-state-repli...
 
