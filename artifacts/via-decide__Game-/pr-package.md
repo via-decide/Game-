@@ -1,3 +1,9 @@
+Branch: simba/implement-a-distributed-world-state-synchronizer
+Title: Implement a distributed world-state synchronizer called via-cell-brok...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Break the physical limit of single-server capacity. This architecture allows the engine to host a single, massive, persistent world where thousands of players can coexist and interact seamlessly, with the backend dynamically spinning up and down "Cell Authorities" to meet local demand.
 Branch: simba/implement-a-virtual-file-system-vfs-called-via-v
 Title: Implement a Virtual File System (VFS) called via-vfs-core to aggregat...
 
