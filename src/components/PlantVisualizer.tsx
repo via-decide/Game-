@@ -147,11 +147,14 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const plantGroupRef = useRef<THREE.Group | null>(null);
   const dirLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
   const weatherParticlesRef = useRef<THREE.Points | null>(null);
   const pestParticlesRef = useRef<THREE.Points | null>(null);
   const pestMeshesRef = useRef<THREE.Group | null>(null);
   const burningParticlesRef = useRef<THREE.Points | null>(null);
   const toolParticlesRef = useRef<THREE.Points | null>(null);
+  const lastLightningTime = useRef(0);
+  const lightningIntensity = useRef(0);
 
   // Use refs for props to avoid stale closures in the animation loop
   const isBurningRef = useRef(isBurning);
@@ -182,16 +185,25 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
       weatherParticlesRef.current = null;
     }
 
+    // Reset scene fog and background
+    scene.fog = null;
+    scene.background = null;
+
     if (type === 'rain' || type === 'storm') {
-      const count = type === 'storm' ? 2000 : 800;
+      const count = type === 'storm' ? 3000 : 1000;
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(count * 3);
+      const velocities = new Float32Array(count * 3);
+
       for (let i = 0; i < count * 3; i += 3) {
         positions[i] = (Math.random() - 0.5) * 10;
         positions[i + 1] = Math.random() * 10;
         positions[i + 2] = (Math.random() - 0.5) * 10;
+        velocities[i + 1] = type === 'storm' ? -0.2 - Math.random() * 0.2 : -0.1 - Math.random() * 0.1;
       }
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+
       const material = new THREE.PointsMaterial({
         color: 0x81D4FA,
         size: 0.05,
@@ -201,9 +213,11 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
       const points = new THREE.Points(geometry, material);
       scene.add(points);
       weatherParticlesRef.current = points;
+
+      // Set dark background for rain/storm
+      scene.background = new THREE.Color(type === 'storm' ? 0x1A1A1A : 0x2A2A2A);
     } else if (type === 'heatwave') {
-      // Heat haze particles
-      const count = 200;
+      const count = 300;
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(count * 3);
       for (let i = 0; i < count * 3; i += 3) {
@@ -222,8 +236,11 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
       const points = new THREE.Points(geometry, material);
       scene.add(points);
       weatherParticlesRef.current = points;
+
+      // Set warm background for heatwave
+      scene.background = new THREE.Color(0x3E2723);
     } else if (type === 'fog') {
-      const count = 500;
+      const count = 800;
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(count * 3);
       for (let i = 0; i < count * 3; i += 3) {
@@ -234,13 +251,18 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       const material = new THREE.PointsMaterial({
         color: 0xFFFFFF,
-        size: 0.4,
+        size: 0.5,
         transparent: true,
-        opacity: 0.1,
+        opacity: 0.15,
       });
       const points = new THREE.Points(geometry, material);
       scene.add(points);
       weatherParticlesRef.current = points;
+
+      // Add scene fog and matching background
+      const fogColor = new THREE.Color(0x454545);
+      scene.fog = new THREE.Fog(fogColor, 2, 10);
+      scene.background = fogColor;
     }
   };
 
@@ -522,7 +544,10 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
     resizeObserver.observe(containerRef.current);
 
     // Lighting
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    ambientLightRef.current = ambientLight;
+
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(5, 10, 7.5);
     scene.add(dirLight);
@@ -661,30 +686,59 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
       // Animate Weather Particles
       if (weatherParticlesRef.current) {
         const positions = weatherParticlesRef.current.geometry.attributes.position.array as Float32Array;
+        const velocities = weatherParticlesRef.current.geometry.attributes.velocity?.array as Float32Array;
+        
         if (weatherRef.current === 'rain' || weatherRef.current === 'storm') {
-          const speed = weatherRef.current === 'storm' ? 0.25 : 0.15;
-          for (let i = 1; i < positions.length; i += 3) {
-            positions[i] -= speed;
+          for (let i = 0; i < positions.length; i += 3) {
+            if (velocities) {
+              positions[i + 1] += velocities[i + 1];
+            } else {
+              positions[i + 1] -= 0.15;
+            }
             // Add some horizontal drift
-            positions[i-1] += Math.sin(time + i) * 0.01;
-            if (positions[i] < 0) {
-              positions[i] = 10;
-              positions[i-1] = (Math.random() - 0.5) * 10;
+            positions[i] += Math.sin(time + i) * 0.01;
+            
+            if (positions[i + 1] < 0) {
+              positions[i + 1] = 10;
+              positions[i] = (Math.random() - 0.5) * 10;
+              positions[i + 2] = (Math.random() - 0.5) * 10;
             }
           }
         } else if (weatherRef.current === 'heatwave') {
           for (let i = 1; i < positions.length; i += 3) {
             positions[i] += 0.02;
-            positions[i-1] += Math.sin(time * 2 + i) * 0.02;
+            positions[i - 1] += Math.sin(time * 2 + i) * 0.02;
             if (positions[i] > 4) positions[i] = 0;
           }
         } else if (weatherRef.current === 'fog') {
           for (let i = 0; i < positions.length; i += 3) {
             positions[i] += Math.sin(time * 0.3 + i) * 0.008;
-            positions[i+2] += Math.cos(time * 0.3 + i) * 0.008;
+            positions[i + 2] += Math.cos(time * 0.3 + i) * 0.008;
           }
         }
         weatherParticlesRef.current.geometry.attributes.position.needsUpdate = true;
+      }
+
+      // Lightning effect for storm
+      if (weatherRef.current === 'storm' && !isBurningRef.current && !hasPestsRef.current) {
+        const now = Date.now();
+        if (now - lastLightningTime.current > 3000 + Math.random() * 5000) {
+          // Flash!
+          lightningIntensity.current = 2.0;
+          lastLightningTime.current = now;
+        }
+      }
+
+      // Apply lightning decay
+      if (lightningIntensity.current > 0) {
+        lightningIntensity.current *= 0.9;
+        if (lightningIntensity.current < 0.01) lightningIntensity.current = 0;
+        
+        if (dirLightRef.current) dirLightRef.current.intensity = 0.8 + lightningIntensity.current;
+        if (ambientLightRef.current) ambientLightRef.current.intensity = 0.6 + lightningIntensity.current * 0.5;
+      } else {
+        if (dirLightRef.current) dirLightRef.current.intensity = 0.8;
+        if (ambientLightRef.current) ambientLightRef.current.intensity = 0.6;
       }
 
       // Animate Pest Particles
