@@ -1,3 +1,9 @@
+Branch: simba/implement-a-virtual-file-system-vfs-called-via-v
+Title: Implement a Virtual File System (VFS) called via-vfs-core to aggregat...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Protect game assets from easy ripping while significantly improving load times. By batching thousands of tiny files into a few large, compressed, and encrypted .pak volumes, you minimize disk seek times and network overhead, creating a professional-grade distribution system.
 Branch: simba/implement-a-highly-optimized-gpu-driven-lighting
 Title: Implement a highly optimized, GPU-driven lighting pipeline called via...
 
