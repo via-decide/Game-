@@ -265,14 +265,35 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
 
       // "Hero" insect meshes
       const insectGroup = new THREE.Group();
-      const insectGeom = new THREE.SphereGeometry(0.03, 4, 4);
+      const bodyGeom = new THREE.SphereGeometry(0.03, 4, 4);
+      const wingGeom = new THREE.PlaneGeometry(0.06, 0.03);
       const insectMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x1B5E20 });
+      const wingMat = new THREE.MeshStandardMaterial({ 
+        color: 0xFFFFFF, 
+        transparent: true, 
+        opacity: 0.4, 
+        side: THREE.DoubleSide 
+      });
       
-      for (let i = 0; i < 5; i++) {
-        const insect = new THREE.Mesh(insectGeom, insectMat);
+      for (let i = 0; i < 6; i++) {
+        const insect = new THREE.Group();
+        
+        const body = new THREE.Mesh(bodyGeom, insectMat);
+        insect.add(body);
+
+        const leftWing = new THREE.Mesh(wingGeom, wingMat);
+        leftWing.position.set(-0.03, 0.02, 0);
+        leftWing.name = 'leftWing';
+        insect.add(leftWing);
+
+        const rightWing = new THREE.Mesh(wingGeom, wingMat);
+        rightWing.position.set(0.03, 0.02, 0);
+        rightWing.name = 'rightWing';
+        insect.add(rightWing);
+
         // Random starting positions
         const angle = Math.random() * Math.PI * 2;
-        const radius = 0.5 + Math.random() * 0.5;
+        const radius = 0.5 + Math.random() * 0.7;
         insect.position.set(Math.cos(angle) * radius, 0.5 + Math.random() * 1.5, Math.sin(angle) * radius);
         insectGroup.add(insect);
       }
@@ -530,6 +551,18 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
           insect.position.x = Math.cos(time * speed + idx) * radius;
           insect.position.z = Math.sin(time * speed + idx) * radius;
           insect.position.y += Math.sin(time * 3 + idx) * 0.01;
+          
+          // Flap wings
+          const leftWing = insect.getObjectByName('leftWing');
+          const rightWing = insect.getObjectByName('rightWing');
+          if (leftWing && rightWing) {
+            const flap = Math.sin(time * 40 + idx) * 0.8;
+            leftWing.rotation.z = flap;
+            rightWing.rotation.z = -flap;
+          }
+
+          // Orient insect to movement
+          insect.rotation.y = -(time * speed + idx) + Math.PI / 2;
         });
       }
 
