@@ -1,3 +1,9 @@
+Branch: simba/implement-a-highly-scalable-gpu-driven-particle-
+Title: Implement a highly scalable, GPU-driven particle engine called via-vf...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Unlock the ability to render spectacular, screen-filling visual effects-such as dense rainstorms, massive explosions, or sprawling magical fields-without stealing a single millisecond from the main ECS game loop. This finalizes the rendering capabilities of the custom engine.
 Branch: simba/implement-a-highly-optimized-binary-based-serial
 Title: Implement a highly optimized, binary-based serialization engine calle...
 
