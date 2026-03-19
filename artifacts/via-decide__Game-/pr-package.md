@@ -1,3 +1,9 @@
+Branch: simba/implement-a-responsive-ui-layout-and-localizatio
+Title: Implement a responsive UI layout and localization module called via-g...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Ensure the game is universally accessible and visually perfect on any screen size or in any language. By building a robust typography and layout engine, you eliminate the final barrier to a global, multi-platform launch, ensuring the custom UI scales as efficiently as the core simulation.
 Branch: simba/implement-a-deterministic-replay-and-broadcastin
 Title: Implement a deterministic replay and broadcasting system called via-r...
 

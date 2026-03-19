@@ -1,6 +1,7 @@
 {
   "repo": "via-decide/Game-",
   "mode": "codex_then_antigravity",
+  "branch": "simba/implement-a-responsive-ui-layout-and-localizatio",
   "branch": "simba/implement-a-deterministic-replay-and-broadcastin",
   "branch": "simba/implement-a-deterministic-constraints-solver-cal",
   "branch": "simba/implement-a-highly-scalable-player-identity-and-",
