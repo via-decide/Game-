@@ -11,6 +11,7 @@ interface PlantVisualizerProps {
   isBurning?: boolean;
   hasPests?: boolean;
   weather?: WeatherType;
+  toolEffect?: string | null;
 }
 
 const createPlantModel = (index: number, progress: number, type: string = 'Basic', plantColor: string = '#4CAF50') => {
@@ -127,7 +128,8 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
   color,
   isBurning = false, 
   hasPests = false,
-  weather = 'clear'
+  weather = 'clear',
+  toolEffect = null
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -139,12 +141,14 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
   const pestParticlesRef = useRef<THREE.Points | null>(null);
   const pestMeshesRef = useRef<THREE.Group | null>(null);
   const burningParticlesRef = useRef<THREE.Points | null>(null);
+  const toolParticlesRef = useRef<THREE.Points | null>(null);
 
   // Use refs for props to avoid stale closures in the animation loop
   const isBurningRef = useRef(isBurning);
   const hasPestsRef = useRef(hasPests);
   const weatherRef = useRef(weather);
   const progressRef = useRef(progress);
+  const toolEffectRef = useRef(toolEffect);
 
   // Particle System for Weather
   const createWeatherParticles = (type: WeatherType) => {
@@ -341,6 +345,92 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
     }
   };
 
+  const createToolParticles = (effect: string) => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    if (toolParticlesRef.current) {
+      scene.remove(toolParticlesRef.current);
+      toolParticlesRef.current.geometry.dispose();
+      (toolParticlesRef.current.material as THREE.Material).dispose();
+      toolParticlesRef.current = null;
+    }
+
+    let count = 0;
+    let color = 0xffffff;
+    let size = 0.1;
+    let opacity = 0.8;
+
+    if (effect === 'water') {
+      count = 500;
+      color = 0x00B0FF;
+      size = 0.08;
+    } else if (effect === 'fertilize') {
+      count = 300;
+      color = 0xFFD700;
+      size = 0.12;
+    } else if (effect === 'pesticide' || effect === 'pest-repellent-pulse') {
+      count = 1000;
+      color = 0x00E676;
+      size = 0.15;
+      opacity = 0.4;
+    } else if (effect === 'genetic-scanner') {
+      count = 800;
+      color = 0x2196F3;
+      size = 0.05;
+    } else if (effect === 'pruning-shears') {
+      count = 600;
+      color = 0xE0E0E0;
+      size = 0.1;
+      opacity = 0.6;
+    }
+
+    if (count > 0) {
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      const velocities = new Float32Array(count * 3);
+
+      for (let i = 0; i < count * 3; i += 3) {
+        if (effect === 'water' || effect === 'pruning-shears') {
+          positions[i] = (Math.random() - 0.5) * 2;
+          positions[i + 1] = 4 + Math.random() * 2;
+          positions[i + 2] = (Math.random() - 0.5) * 2;
+          velocities[i + 1] = -0.1 - Math.random() * 0.1;
+        } else if (effect === 'fertilize') {
+          positions[i] = (Math.random() - 0.5) * 1.5;
+          positions[i + 1] = Math.random() * 0.5;
+          positions[i + 2] = (Math.random() - 0.5) * 1.5;
+          velocities[i + 1] = 0.05 + Math.random() * 0.05;
+        } else {
+          positions[i] = (Math.random() - 0.5) * 0.1;
+          positions[i + 1] = 1 + (Math.random() - 0.5) * 0.1;
+          positions[i + 2] = (Math.random() - 0.5) * 0.1;
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 0.1 + Math.random() * 0.1;
+          velocities[i] = Math.cos(angle) * speed;
+          velocities[i + 1] = (Math.random() - 0.5) * 0.1;
+          velocities[i + 2] = Math.sin(angle) * speed;
+        }
+      }
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+
+      const material = new THREE.PointsMaterial({
+        color,
+        size,
+        transparent: true,
+        opacity,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
+      toolParticlesRef.current = points;
+    }
+  };
+
   useEffect(() => {
     progressRef.current = progress;
     if (plantGroupRef.current) {
@@ -351,12 +441,16 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
 
   useEffect(() => {
     isBurningRef.current = isBurning;
+    hasPestsRef.current = hasPests;
     createStatusParticles();
   }, [isBurning, hasPests]); // Consolidate status updates
 
   useEffect(() => {
-    hasPestsRef.current = hasPests;
-  }, [hasPests]);
+    toolEffectRef.current = toolEffect;
+    if (toolEffect) {
+      createToolParticles(toolEffect);
+    }
+  }, [toolEffect]);
 
   useEffect(() => {
     weatherRef.current = weather;
@@ -580,6 +674,48 @@ const PlantVisualizer: React.FC<PlantVisualizerProps> = ({
           }
         }
         burningParticlesRef.current.geometry.attributes.position.needsUpdate = true;
+      }
+      
+      if (toolParticlesRef.current) {
+        const positions = toolParticlesRef.current.geometry.attributes.position.array as Float32Array;
+        const velocities = toolParticlesRef.current.geometry.attributes.velocity.array as Float32Array;
+        for (let i = 0; i < positions.length; i += 3) {
+          positions[i] += velocities[i];
+          positions[i + 1] += velocities[i + 1];
+          positions[i + 2] += velocities[i + 2];
+
+          if (toolEffectRef.current === 'water' || toolEffectRef.current === 'pruning-shears') {
+            if (positions[i + 1] < 0) {
+              positions[i + 1] = 4 + Math.random() * 2;
+              positions[i] = (Math.random() - 0.5) * 2;
+              positions[i + 2] = (Math.random() - 0.5) * 2;
+            }
+          } else if (toolEffectRef.current === 'fertilize') {
+            if (positions[i + 1] > 3) {
+              positions[i + 1] = 0;
+              positions[i] = (Math.random() - 0.5) * 1.5;
+              positions[i + 2] = (Math.random() - 0.5) * 1.5;
+            }
+          } else {
+            // Pulse effect - particles travel outwards
+            const dist = Math.sqrt(positions[i]**2 + positions[i+2]**2);
+            if (dist > 5) {
+              positions[i] = (Math.random() - 0.5) * 0.1;
+              positions[i + 1] = 1 + (Math.random() - 0.5) * 0.1;
+              positions[i + 2] = (Math.random() - 0.5) * 0.1;
+            }
+          }
+        }
+        toolParticlesRef.current.geometry.attributes.position.needsUpdate = true;
+        
+        // Fade out tool particles over time
+        const mat = toolParticlesRef.current.material as THREE.PointsMaterial;
+        if (mat.opacity > 0) {
+          mat.opacity -= 0.005;
+        } else {
+          sceneRef.current?.remove(toolParticlesRef.current);
+          toolParticlesRef.current = null;
+        }
       }
 
       if (rendererRef.current && sceneRef.current && cameraRef.current) {

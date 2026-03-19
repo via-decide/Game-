@@ -84,4 +84,5 @@ export type GameState = {
     email: string | null;
   } | null;
   isAuthReady: boolean;
+  lastToolEffect: string | null;
 };

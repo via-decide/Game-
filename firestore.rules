@@ -128,7 +128,7 @@ service cloud.firestore {
                       (request.resource.data.get('role', 'player') == 'player');
 
       allow update: if (isOwner(userId) && 
-                       isValidUser(request.resource.data) &&
+                       uidUnchanged() &&
                        request.resource.data.get('role', 'player') == resource.data.get('role', 'player')) || 
                       isAdmin();
     }

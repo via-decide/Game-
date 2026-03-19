@@ -152,6 +152,7 @@ const App: React.FC = () => {
     weather: getRandomWeather(),
     user: null,
     isAuthReady: false,
+    lastToolEffect: null,
   });
 
   const [logs, setLogs] = useState<{ msg: string; type: string }[]>([]);
@@ -372,14 +373,14 @@ const App: React.FC = () => {
     if (toolIndex === -1) return;
     const tool = state.tools[toolIndex];
     
-    if (tool.level >= tool.maxLevel) {
+    if (tool.level >= tool.maxLevel && tool.maxLevel > 0) {
       addLog(`${tool.name} is already at maximum level.`, 'warn');
       return;
     }
 
     const cost = Math.round(tool.baseCost * Math.pow(tool.costMultiplier, tool.level));
     if (state.credits < cost) {
-      addLog(`Insufficient credits for ${tool.name} upgrade. Need ${cost}🪙.`, 'danger');
+      addLog(`Insufficient credits for ${tool.name} acquisition. Need ${cost}🪙.`, 'danger');
       return;
     }
 
@@ -394,7 +395,70 @@ const App: React.FC = () => {
       saveState({ credits: prev.credits - cost, tools: newTools });
       return nextState;
     });
-    addLog(`${tool.name} upgraded to level ${tool.level + 1}!`, 'success');
+    addLog(`${tool.name} ${tool.type === 'active' ? 'acquired' : 'upgraded to level ' + (tool.level + 1)}!`, 'success');
+  };
+
+  const useActiveTool = (id: string) => {
+    const toolIndex = state.tools.findIndex(t => t.id === id);
+    if (toolIndex === -1) return;
+    const tool = state.tools[toolIndex];
+
+    if (tool.level === 0) {
+      addLog(`You must acquire the ${tool.name} first.`, 'warn');
+      return;
+    }
+
+    if ((tool.currentCooldown || 0) > 0) {
+      addLog(`${tool.name} is on cooldown for ${tool.currentCooldown} more cycles.`, 'warn');
+      return;
+    }
+
+    setState(prev => {
+      const newTools = [...prev.tools];
+      newTools[toolIndex] = { ...tool, currentCooldown: tool.activeCooldown };
+      
+      let newOrchards = [...prev.orchards];
+      let credits = prev.credits;
+      let dataSeeds = prev.dataSeeds;
+
+      if (id === 'pest-repellent-pulse') {
+        // Clear all pests in current orchard
+        const orchardIndex = newOrchards.findIndex(o => o.id === prev.activeOrchardId);
+        const orchard = { ...newOrchards[orchardIndex] };
+        orchard.plants = orchard.plants.map(p => p ? { ...p, pests: 0, pestImmunity: 3 } : null);
+        newOrchards[orchardIndex] = orchard;
+        addLog('Pest Repellent Pulse activated! All pests cleared and immunity granted for 3 cycles.', 'success');
+      }
+
+      if (id === 'genetic-scanner') {
+        // This effect will be checked in buyPlot
+        addLog('Genetic Scanner active! Next plot seeded will have significantly higher rarity chance.', 'success');
+      }
+
+      if (id === 'pruning-shears') {
+        const orchardIndex = newOrchards.findIndex(o => o.id === prev.activeOrchardId);
+        const orchard = { ...newOrchards[orchardIndex] };
+        orchard.plants = orchard.plants.map(p => p ? { ...p, stress: Math.max(0, p.stress - 50) } : null);
+        newOrchards[orchardIndex] = orchard;
+        addLog('Nanotech Pruning Shears used! All plants in the current orchard have significantly reduced stress.', 'success');
+      }
+
+      const nextState = {
+        ...prev,
+        tools: newTools,
+        orchards: newOrchards,
+        lastToolEffect: id
+      };
+      
+      saveState({ tools: newTools, orchards: newOrchards });
+      
+      // Reset effect after 2 seconds
+      setTimeout(() => {
+        setState(p => ({ ...p, lastToolEffect: null }));
+      }, 2000);
+
+      return nextState;
+    });
   };
 
   const getToolBonus = (toolId: string) => {
@@ -491,6 +555,20 @@ const App: React.FC = () => {
         plant.water = Math.min(stage.maxWater, plant.water + waterGain);
         plant.stress = Math.max(0, plant.stress - 5);
         addLog(`Hydration levels increased by ${waterGain}.`, 'info');
+        
+        // Trigger visual effect
+        const nextState = { ...prev, orchards: newOrchards, credits, dataSeeds, lastToolEffect: 'water' };
+        saveState({ orchards: newOrchards, credits, dataSeeds });
+        setTimeout(() => setState(p => ({ ...p, lastToolEffect: null })), 1000);
+        return nextState;
+      }
+
+      if (action === 'fertilize' || action === 'pesticide') {
+        // These are items, but we can add effects too
+        const nextState = { ...prev, orchards: newOrchards, credits, dataSeeds, lastToolEffect: action };
+        saveState({ orchards: newOrchards, credits, dataSeeds });
+        setTimeout(() => setState(p => ({ ...p, lastToolEffect: null })), 1000);
+        return nextState;
       }
 
       newPlants[prev.selectedPlantIndex!] = plant;
@@ -508,6 +586,12 @@ const App: React.FC = () => {
       const nutrientBonus = getToolBonus('soil-tester');
       const newWeather = getRandomWeather();
       
+      // Update tool cooldowns
+      const newTools = prev.tools.map(t => ({
+        ...t,
+        currentCooldown: Math.max(0, (t.currentCooldown || 0) - 1)
+      }));
+
       const newOrchards = prev.orchards.map(o => {
         if (!o.isUnlocked) return o;
         const newPlants = o.plants.map(p => {
@@ -583,6 +667,17 @@ const App: React.FC = () => {
       
       const randomType = BASE_PLANT_TYPES[Math.floor(Math.random() * BASE_PLANT_TYPES.length)];
       
+      // Check for Genetic Scanner effect
+      const scannerActive = prev.tools.find(t => t.id === 'genetic-scanner' && (t.currentCooldown || 0) === t.activeCooldown);
+      let rarity: Plant['rarity'] = 'Common';
+      const roll = Math.random();
+      const bonus = scannerActive ? 0.3 : 0;
+
+      if (roll < 0.02 + bonus/10) rarity = 'Legendary';
+      else if (roll < 0.08 + bonus/5) rarity = 'Epic';
+      else if (roll < 0.2 + bonus/2) rarity = 'Rare';
+      else if (roll < 0.4 + bonus) rarity = 'Uncommon';
+
       newPlants[index] = {
         id: Math.random().toString(36).substr(2, 9),
         type: randomType.name,
@@ -594,7 +689,7 @@ const App: React.FC = () => {
         pestImmunity: 0,
         stageIndex: 0,
         isHarvestable: false,
-        rarity: 'Common',
+        rarity,
         growthSpeedMultiplier: randomType.baseGrowthSpeed,
         yieldMultiplier: randomType.baseYield,
         color: randomType.color,
@@ -941,10 +1036,41 @@ const App: React.FC = () => {
                           hasPests={selectedPlant.pests > 0}
                           isBurning={selectedPlant.stress > 90}
                           weather={state.weather.type}
+                          toolEffect={state.lastToolEffect}
                         />
                       );
                     })()}
                     <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/40 to-transparent" />
+                    
+                    {/* Quick Tools Overlay */}
+                    <div className="absolute top-4 right-4 flex flex-col gap-2">
+                      {state.tools.filter(t => t.type === 'active' && t.level > 0).map(tool => (
+                        <button
+                          key={tool.id}
+                          onClick={() => useActiveTool(tool.id)}
+                          disabled={(tool.currentCooldown || 0) > 0}
+                          className={`p-3 rounded-xl border backdrop-blur-md transition-all group relative
+                            ${(tool.currentCooldown || 0) > 0 
+                              ? 'bg-black/40 border-bark-brown/30 text-text-secondary opacity-50' 
+                              : 'bg-leaf-green/20 border-leaf-green/40 text-leaf-green hover:bg-leaf-green/40'}`}
+                        >
+                          {tool.id === 'pest-repellent-pulse' ? <Bug size={20} /> : <Database size={20} />}
+                          
+                          {/* Tooltip */}
+                          <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-soil-dark border border-bark-brown rounded-lg text-[10px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            {tool.name.toUpperCase()} 
+                            {(tool.currentCooldown || 0) > 0 && ` (${tool.currentCooldown}c)`}
+                          </div>
+
+                          {/* Cooldown Progress */}
+                          {(tool.currentCooldown || 0) > 0 && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl">
+                              <span className="text-[10px] font-bold text-white">{tool.currentCooldown}</span>
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="space-y-8">
