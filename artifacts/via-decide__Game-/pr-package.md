@@ -1,3 +1,9 @@
+Branch: simba/implement-a-deterministic-input-abstraction-laye
+Title: Implement a deterministic input abstraction layer called via-input-bu...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Standardize how player intentions are captured and processed across any device. By buffering these inputs deterministically, the engine unlocks the ability to perform precise client-side prediction and rollback, masking network latency and making the gameplay feel instantly responsive.
 Branch: simba/implement-a-custom-low-level-rendering-pipeline-
 Title: Implement a custom, low-level rendering pipeline called via-render-ba...
 
