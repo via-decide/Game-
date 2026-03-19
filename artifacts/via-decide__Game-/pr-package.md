@@ -1,3 +1,9 @@
+Branch: simba/implement-a-via-spatial-partitioning-module-util
+Title: Implement a via-spatial-partitioning module utilizing a Dynamic Spati...
+
+## Summary
+- Repo orchestration task for via-decide/Game-
+- Goal: Eliminate the exponential O(N^2) bottleneck of standard collision checking. This foundational physics upgrade allows the engine to effortlessly simulate tens of thousands of dynamic rigidbodies, complex bullet-hell mechanics, or dense crowds without degrading the server tick rate or client frame rate.
 Branch: simba/implement-a-strict-data-oriented-entity-componen
 Title: Implement a strict, data-oriented Entity-Component-System (ECS) archi...
 
