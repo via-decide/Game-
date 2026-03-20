@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlaskConical, Droplets, TrendingUp, Flame } from 'lucide-react';
+import { FlaskConical, Droplets, TrendingUp, Flame, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 import { GlobalUpgrades, Plant } from '../../types';
 
@@ -97,9 +97,10 @@ const LabTab: React.FC<LabTabProps> = ({
 
       <div className="grid grid-cols-1 gap-3">
         {[
-          { id: 'waterEfficiency', name: 'Deep Roots', desc: 'Reduces water consumption by 10%', icon: Droplets },
-          { id: 'nutrientRetention', name: 'Efficient Metabolism', desc: 'Reduces nutrient drain by 10%', icon: TrendingUp },
-          { id: 'stressResistance', name: 'Hardened Bark', desc: 'Reduces stress gain by 5 points', icon: Flame },
+          { id: 'waterEfficiency',  name: 'Deep Roots',           desc: 'Reduces water consumption by 10%',   icon: Droplets },
+          { id: 'nutrientRetention',name: 'Efficient Metabolism',  desc: 'Reduces nutrient drain by 10%',      icon: TrendingUp },
+          { id: 'stressResistance', name: 'Hardened Bark',         desc: 'Reduces stress gain by 5 points',    icon: Flame },
+          { id: 'pestDefense',      name: 'Immune System',         desc: 'Increases pest block chance by 5%',  icon: ShieldAlert },
         ].map(u => (
           <button 
             key={u.id}
