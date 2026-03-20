@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion';
 import { 
   Sprout, 
   FlaskConical, 
@@ -45,9 +46,10 @@ interface ErrorBoundaryState {
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = { hasError: false, error: null };
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: any) {
@@ -57,11 +59,11 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-soil-dark flex items-center justify-center p-6">
-          <div className="hardware-panel max-w-lg w-full p-8 space-y-6 border-burn-red/50">
+        <div className="min-h-screen bg-soil-dark flex items-center justify-center p-6 text-white">
+          <div className="hardware-panel max-w-lg w-full p-8 space-y-6 border-burn-red/50 bg-black/80">
             <div className="flex items-center gap-3 text-burn-red">
               <AlertCircle size={32} />
-              <h2 className="text-xl font-bold uppercase tracking-tight">System Critical Error</h2>
+              <h2 className="text-xl font-bold uppercase tracking-tight text-white">System Critical Error</h2>
             </div>
             <div className="bg-black/40 p-4 rounded-lg font-mono text-xs space-y-2 overflow-auto max-h-64">
               <p className="text-burn-red font-bold">Error: {this.state.error?.message || 'Unknown'}</p>
@@ -76,7 +78,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         </div>
       );
     }
-    return this.props.children;
+    return (this.props as any).children;
   }
 }
 

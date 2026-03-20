@@ -65,12 +65,14 @@ export type Weather = {
   name: string;
   description: string;
   intensity: number;
+  modifier: number;
 };
 
 export type GameState = {
   day: number;
   credits: number;
   dataSeeds: number;
+  meritScore: number;
   orchards: Orchard[];
   activeOrchardId: string;
   selectedPlantIndex: number | null;

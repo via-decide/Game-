@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sprout, FlaskConical, Store, Wrench, Trophy, Medal } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'motion';
 
 interface NavigationProps {
   activeTab: string;

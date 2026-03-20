@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlaskConical, Droplets, TrendingUp, Flame } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'motion';
 import { GlobalUpgrades, Plant } from '../../types';
 
 interface LabTabProps {

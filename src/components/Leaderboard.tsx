@@ -7,6 +7,7 @@ interface LeaderboardEntry {
   uid: string;
   displayName: string;
   credits: number;
+  meritScore: number;
 }
 
 const Leaderboard: React.FC = () => {
@@ -16,15 +17,23 @@ const Leaderboard: React.FC = () => {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const q = query(collection(db, 'users'), orderBy('credits', 'desc'), limit(10));
+        const q = query(collection(db, 'users'), orderBy('meritScore', 'desc'), limit(10));
         const snapshot = await getDocs(q);
         const data = snapshot.docs.map(doc => ({
           uid: doc.id,
           ...doc.data()
-        })) as LeaderboardEntry[];
+        })) as unknown as LeaderboardEntry[];
         setEntries(data);
       } catch (e) {
         console.error("Error fetching leaderboard:", e);
+        // Fallback to credits if meritScore query fails or isn't indexed yet
+        const qFallback = query(collection(db, 'users'), orderBy('credits', 'desc'), limit(10));
+        const snapshotFallback = await getDocs(qFallback);
+        const dataFallback = snapshotFallback.docs.map(doc => ({
+          uid: doc.id,
+          ...doc.data()
+        })) as unknown as LeaderboardEntry[];
+        setEntries(dataFallback);
       } finally {
         setLoading(false);
       }
@@ -57,7 +66,7 @@ const Leaderboard: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs font-bold uppercase tracking-tight">{entry.displayName || 'Anonymous'}</p>
-                    <p className="text-[9px] font-mono text-text-secondary opacity-50 truncate w-32 md:w-auto">ID: {entry.uid.slice(0, 8)}...</p>
+                    <p className="text-[9px] font-mono text-text-secondary italic">Merit Score: {entry.meritScore || 0}</p>
                   </div>
                 </div>
               </div>

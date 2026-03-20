@@ -129,11 +129,11 @@ export const SHOP_ITEMS = [
 ];
 
 export const WEATHER_TYPES: Record<WeatherType, Weather> = {
-  clear: { type: 'clear', name: 'Clear Skies', description: 'Optimal growth conditions.', intensity: 1 },
-  rain: { type: 'rain', name: 'Gentle Rain', description: 'Hydration levels increasing.', intensity: 1.5 },
-  storm: { type: 'storm', name: 'Severe Storm', description: 'High hydration, but increased stress.', intensity: 2 },
-  heatwave: { type: 'heatwave', name: 'Intense Heatwave', description: 'Rapid nutrient drain and high stress.', intensity: 2.5 },
-  fog: { type: 'fog', name: 'Dense Fog', description: 'Reduced water loss, slow research.', intensity: 0.5 },
+  clear: { type: 'clear', name: 'Clear Skies', description: 'Optimal growth conditions.', intensity: 1, modifier: 1.2 },
+  rain: { type: 'rain', name: 'Gentle Rain', description: 'Hydration levels increasing.', intensity: 1.5, modifier: 1.1 },
+  storm: { type: 'storm', name: 'Severe Storm', description: 'High hydration, but increased stress.', intensity: 2, modifier: 0.8 },
+  heatwave: { type: 'heatwave', name: 'Intense Heatwave', description: 'Rapid nutrient drain and high stress.', intensity: 2.5, modifier: 0.6 },
+  fog: { type: 'fog', name: 'Dense Fog', description: 'Reduced water loss, slow research.', intensity: 0.5, modifier: 1.0 },
 };
 
 export const RARITY_COLORS = {

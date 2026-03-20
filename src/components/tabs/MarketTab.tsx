@@ -1,6 +1,6 @@
 import React from 'react';
 import { Send, ShieldCheck, ArrowUpCircle, Bug } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'motion';
 import { SHOP_ITEMS } from '../../constants';
 
 interface MarketTabProps {

@@ -20,11 +20,14 @@ import {
   writeBatch
 } from 'firebase/firestore';
 
+import { calculateBaseMetrics, engineModels } from '../engine/models';
+
 export const useGameState = (user: { uid: string; displayName: string | null; email: string | null } | null, addLog: (msg: string, type?: string) => void) => {
   const [state, setState] = useState<GameState>({
     day: 1,
     credits: 100,
     dataSeeds: 0,
+    meritScore: 0,
     orchards: [
       { id: 'orchard-1', name: 'Primary Orchard', plants: Array(9).fill(null), isUnlocked: true, unlockCost: 0 },
       { id: 'orchard-2', name: 'Highland Ridge', plants: Array(9).fill(null), isUnlocked: false, unlockCost: 250 },
@@ -75,6 +78,7 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
           day: data.day ?? prev.day,
           credits: data.credits ?? prev.credits,
           dataSeeds: data.dataSeeds ?? prev.dataSeeds,
+          meritScore: data.meritScore ?? prev.meritScore,
           orchards: data.orchards ?? prev.orchards,
           upgrades: data.upgrades ?? prev.upgrades,
           tools: data.tools ?? prev.tools,
@@ -152,7 +156,11 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
 
       if (action === 'harvest') {
         if (!plant.isHarvestable) return prev;
-        const reward = Math.round((500 + (plant.rootStrength * 2)) * (plant.yieldMultiplier || 1));
+        
+        const metrics = calculateBaseMetrics(plant.rootStrength, plant.water, plant.nutrients, prev.weather.modifier);
+        const engineResult = engineModels.weekly_harvest_engine(metrics);
+        
+        const reward = Math.round(500 + engineResult * (plant.yieldMultiplier || 1));
         credits += reward;
         dataSeeds += 20;
         addLog(`Harvested ${plant.type}! Gained ${reward} credits and 20 genetic data.`, 'success');
@@ -169,8 +177,13 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
           addLog('Insufficient water for research.', 'warn');
           return prev;
         }
-        const baseG = Math.floor(Math.random() * 8) + 5;
-        const finalG = Math.max(1, Math.round(baseG * (plant.nutrients / 100) * (plant.growthSpeedMultiplier || 1)));
+
+        const metrics = calculateBaseMetrics(plant.rootStrength, plant.water, plant.nutrients, prev.weather.modifier);
+        const rootGain = engineModels.root_strength_calculator(metrics);
+        
+        // Normalize gain to prevent too rapid growth
+        const finalG = Math.max(1, Math.round(rootGain / 20 * (plant.growthSpeedMultiplier || 1)));
+        
         plant.rootStrength += finalG;
         plant.water -= 5;
         plant.nutrients -= 10;
@@ -231,6 +244,7 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
       const newOrchards = prev.orchards.map(o => {
         if (!o.isUnlocked) return o;
         const newPlants = o.plants.map(p => {
+          // ... (existing weather/pests logic)
           if (!p) return null;
           const plant = { ...p };
           const weather = prev.weather;
@@ -277,9 +291,19 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
         return { ...o, plants: newPlants };
       });
 
+      let totalMerit = 0;
+      newOrchards.forEach(o => {
+        o.plants.forEach(p => {
+          if (p) {
+            const metrics = calculateBaseMetrics(p.rootStrength, p.water, p.nutrients, prev.weather.modifier);
+            totalMerit += engineModels.fair_ranking_engine(metrics);
+          }
+        });
+      });
+
       addLog(`Day ${prev.day + 1} started. Weather: ${newWeather.name}.`, 'system');
-      const nextState = { ...prev, day: prev.day + 1, orchards: newOrchards, weather: newWeather, tools: newTools };
-      saveState({ day: prev.day + 1, orchards: newOrchards, weather: newWeather, tools: newTools });
+      const nextState = { ...prev, day: prev.day + 1, orchards: newOrchards, weather: newWeather, tools: newTools, meritScore: totalMerit };
+      saveState({ day: prev.day + 1, orchards: newOrchards, weather: newWeather, tools: newTools, meritScore: totalMerit });
       return nextState;
     });
   }, [saveState, addLog, getToolBonus]);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sun, CloudRain, CloudLightning, Thermometer, Cloud, LogOut, RefreshCw, Database } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'motion';
 import { GameState } from '../../types';
 
 interface HeaderProps {

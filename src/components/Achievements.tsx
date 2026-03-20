@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trophy, Star, Target, Zap } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'motion';
 
 interface Achievement {
   id: string;

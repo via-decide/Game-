@@ -1,6 +1,6 @@
 import React from 'react';
 import { Database } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'motion';
 import PlantCard from '../PlantCard';
 import { Orchard, Plant } from '../../types';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Wrench, ShieldCheck, ArrowUpCircle, Cpu } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'motion';
 import { Tool } from '../../types';
 
 interface ToolsTabProps {
