@@ -6,15 +6,16 @@ import {
   handleFirestoreError, 
   OperationType 
 } from '../firebase';
-import { 
-  doc, 
-  setDoc, 
-  onSnapshot, 
-  updateDoc, 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
+import {
+  doc,
+  setDoc,
+  onSnapshot,
+  updateDoc,
+  collection,
+  query,
+  where,
+  limit,
+  getDocs,
   serverTimestamp,
   increment,
   writeBatch
@@ -391,7 +392,7 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
     setIsTransferring(true);
     try {
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('uid', '==', transferTarget));
+      const q = query(usersRef, where('uid', '==', transferTarget), limit(1));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
@@ -569,6 +570,25 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
     });
   }, [state, breedingParents, saveState, addLog]);
 
+  const unlockOrchard = useCallback((id: string) => {
+    const orchard = state.orchards.find(o => o.id === id);
+    if (!orchard || orchard.isUnlocked) return;
+    if (state.credits < orchard.unlockCost) {
+      addLog(`Need ${orchard.unlockCost} credits to unlock ${orchard.name}.`, 'danger');
+      return;
+    }
+    setState(prev => {
+      const newOrchards = prev.orchards.map(o =>
+        o.id === id ? { ...o, isUnlocked: true } : o
+      );
+      const newCredits = prev.credits - orchard.unlockCost;
+      const nextState = { ...prev, orchards: newOrchards, credits: newCredits, activeOrchardId: id };
+      saveState({ orchards: newOrchards, credits: newCredits });
+      return nextState;
+    });
+    addLog(`${orchard.name} unlocked!`, 'success');
+  }, [state.orchards, state.credits, saveState, addLog]);
+
   return {
     state,
     setState,
@@ -588,6 +608,7 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
     useActiveTool,
     handleTransferCredits,
     handleCrossPollinate,
+    unlockOrchard,
     saveState
   };
 };

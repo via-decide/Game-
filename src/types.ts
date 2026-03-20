@@ -76,7 +76,7 @@ export type GameState = {
   selectedPlantIndex: number | null;
   upgrades: GlobalUpgrades;
   tools: Tool[];
-  activeTab: 'orchard' | 'lab' | 'market' | 'tools';
+  activeTab: 'orchard' | 'lab' | 'market' | 'tools' | 'achievements' | 'leaderboard';
   weather: Weather;
   user: {
     uid: string;

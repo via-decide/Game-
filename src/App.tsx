@@ -87,8 +87,8 @@ const App: React.FC = () => {
   }, []);
 
   const { user, isAuthReady, isLoginLoading, handleLogin, handleLogout } = useAuth(addLog);
-  const { 
-    state, 
+  const {
+    state,
     setState,
     transferTarget,
     setTransferTarget,
@@ -105,7 +105,8 @@ const App: React.FC = () => {
     buyUpgrade,
     useActiveTool,
     handleTransferCredits,
-    handleCrossPollinate
+    handleCrossPollinate,
+    unlockOrchard
   } = useGameState(user, addLog);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -363,7 +364,7 @@ const App: React.FC = () => {
                     selectedPlantIndex={state.selectedPlantIndex}
                     onPlantClick={(i, p) => p ? setState(prev => ({ ...prev, selectedPlantIndex: i })) : buyPlot(i)}
                     onOrchardChange={(id) => setState(prev => ({ ...prev, activeOrchardId: id, selectedPlantIndex: null }))}
-                    onUnlockOrchard={(id) => {}} // Hook handles unlock
+                    onUnlockOrchard={unlockOrchard}
                   />
                 )}
                 {state.activeTab === 'lab' && (

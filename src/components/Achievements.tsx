@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Star, Target, Zap } from 'lucide-react';
+import { Trophy, Star, Sprout, TrendingUp, Database, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface Achievement {
@@ -68,8 +68,5 @@ const Achievements: React.FC<AchievementsProps> = ({ stats }) => {
     </div>
   );
 };
-
-// Types fix for the icons
-import { Sprout, TrendingUp, Database, ShieldCheck } from 'lucide-react';
 
 export default Achievements;

@@ -120,12 +120,19 @@ service cloud.firestore {
       // Users can only read their own profile
       allow read: if isOwner(userId) || isAdmin();
       
-      // Allow searching for other users by UID for transfers (only UID and displayName)
-      allow list: if isAuthenticated() && 
-                    request.query.limit <= 1 && 
-                    request.query.filters.size() == 1 && 
-                    request.query.filters[0].op == '==' && 
-                    request.query.filters[0].path == 'uid';
+      // Allow listing for:
+      // 1. Transfer target lookup — filtered by uid, limit 1
+      // 2. Leaderboard — ordered by credits, limit <= 10
+      allow list: if isAuthenticated() && (
+                    // Transfer: search by uid
+                    (request.query.limit <= 1 &&
+                     request.query.filters.size() == 1 &&
+                     request.query.filters[0].op == '==' &&
+                     request.query.filters[0].path == 'uid') ||
+                    // Leaderboard: top players by credits
+                    (request.query.limit <= 10 &&
+                     request.query.filters.size() == 0)
+                  );
 
       allow create: if isOwner(userId) && 
                       isValidUser(request.resource.data) &&
