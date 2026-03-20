@@ -401,11 +401,18 @@ const App: React.FC = () => {
                   />
                 )}
                 {state.activeTab === 'achievements' && (
-                  <Achievements 
+                  <Achievements
                     stats={{
                       totalCredits: state.credits,
                       totalPlants: state.orchards.reduce((acc, o) => acc + o.plants.filter(p => p !== null).length, 0),
-                      maxRarity: 'Common', // Placeholder or track in state
+                      maxRarity: (() => {
+                        const rarityOrder = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'];
+                        let best = 0;
+                        state.orchards.forEach(o => o.plants.forEach(p => {
+                          if (p) { const idx = rarityOrder.indexOf(p.rarity); if (idx > best) best = idx; }
+                        }));
+                        return rarityOrder[best];
+                      })(),
                       day: state.day
                     }}
                   />

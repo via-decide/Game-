@@ -18,6 +18,11 @@
   
   --color-glass: rgba(255, 255, 255, 0.03);
   --color-glass-border: rgba(255, 255, 255, 0.08);
+
+  /* UI surface colors — required for bg-card-bg, text-text-primary, text-text-secondary utilities */
+  --color-card-bg: #0C0C0E;
+  --color-text-primary: #F8F9FA;
+  --color-text-secondary: #94A3B8;
 }
 
 :root {

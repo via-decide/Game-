@@ -189,8 +189,8 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
           if (nextStage === PLANT_STAGES.length - 1) plant.isHarvestable = true;
         }
 
-        const pestDefenseBonus = getToolBonus('pest-control');
-        const finalPestChance = 0.15 * (1 - pestDefenseBonus);
+        const pestDefenseBonus = getToolBonus('pest-control') + (prev.upgrades.pestDefense || 0);
+        const finalPestChance = 0.15 * Math.max(0, 1 - pestDefenseBonus);
         if (plant.pestImmunity === 0 && Math.random() < finalPestChance) {
           plant.pests = Math.min(5, plant.pests + 1);
           addLog('Warning: Pest infestation detected!', 'danger');
@@ -465,8 +465,8 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
     setState(prev => {
       const nextUpgrades = {
         ...prev.upgrades,
-        [id]: id === 'stressResistance' 
-          ? (prev.upgrades[id] as number) + 5 
+        [id]: (id === 'stressResistance' || id === 'pestDefense')
+          ? (prev.upgrades[id] as number) + (id === 'pestDefense' ? 0.05 : 5)
           : (prev.upgrades[id] as number) * 0.9
       };
       const nextState = {
