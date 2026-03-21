@@ -135,11 +135,11 @@ const App: React.FC = () => {
     setShowOnboarding(false);
   };
 
-  const activeOrchard = state.orchards.find(o => o.id === state.activeOrchardId)!;
-  const selectedPlant = state.selectedPlantIndex !== null ? activeOrchard.plants[state.selectedPlantIndex] : null;
+  const activeOrchard = state.orchards.find(o => o.id === state.activeOrchardId) ?? state.orchards[0];
+  const selectedPlant = (state.selectedPlantIndex !== null && activeOrchard) ? (activeOrchard.plants[state.selectedPlantIndex] ?? null) : null;
 
   return (
-    <div className="min-h-screen p-3 sm:p-6 flex flex-col items-center gap-4 sm:gap-6 max-w-7xl mx-auto relative overflow-x-hidden">
+    <div className="min-h-screen p-2 sm:p-6 flex flex-col items-center gap-2 sm:gap-6 max-w-7xl mx-auto relative overflow-x-hidden">
       <AnimatePresence>
         {showOnboarding && (
           <motion.div 
@@ -158,10 +158,14 @@ const App: React.FC = () => {
                 <h2 className="font-serif text-4xl italic uppercase tracking-widest premium-gradient-text">Welcome, Pathfinder</h2>
                 <div className="h-px w-24 bg-gradient-to-r from-transparent via-mineral-gold/50 to-transparent mx-auto" />
               </div>
+              <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-mineral-gold/10 border border-mineral-gold/30 text-mineral-gold text-sm font-bold">
+                <span>500 🪙</span>
+                <span className="text-[10px] font-normal text-text-secondary uppercase tracking-widest">Starter Credits Loaded</span>
+              </div>
               <p className="text-text-secondary text-sm leading-relaxed font-medium">
-                You've been assigned to the **Data Orchard** sector. Your mission is to cultivate rare genetic strains, trade credits, and climb the global ranks. 
+                You've been assigned to the <strong>Data Orchard</strong> sector. Cultivate rare genetic strains, trade credits, and climb the global ranks.
                 <br/><br/>
-                Use the navigation rail to access the Lab for cross-pollination and the Market for high-stakes trading.
+                Use the nav tabs to access the Lab for cross-pollination and the Market for trading.
               </p>
               <div className="pt-4">
                 <button 
@@ -231,7 +235,7 @@ const App: React.FC = () => {
 
       <Header state={state} nextDay={nextDay} logout={handleLogout} />
 
-      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-6 items-start">
         {/* Navigation Rail */}
         <Navigation 
           activeTab={state.activeTab} 
@@ -239,7 +243,7 @@ const App: React.FC = () => {
         />
 
         {/* Main Content Area */}
-        <div className="lg:col-span-11 space-y-4 sm:space-y-6">
+        <div className="lg:col-span-11 space-y-2 sm:space-y-6">
           {/* Low-credits banner (shown after modal dismissed) */}
           <AnimatePresence>
             {user && state.credits < 50 && creditsCTADismissed && (
@@ -266,56 +270,107 @@ const App: React.FC = () => {
           {/* Hero Section: Selected Specimen */}
           <AnimatePresence mode="wait">
             {selectedPlant ? (
-              <motion.div 
+              <motion.div
                 key={selectedPlant.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="glass-panel p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-8 hardware-panel"
+                className="glass-panel hardware-panel overflow-hidden"
               >
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-6">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] px-2 py-0.5 rounded bg-white/5 text-text-secondary">
-                        {selectedPlant.type}
-                      </span>
-                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded bg-black/40 border border-white/5
-                        ${(selectedPlant.rarity ?? 'Common') === 'Legendary' ? 'text-mineral-gold border-mineral-gold/20' :
-                          (selectedPlant.rarity ?? 'Common') === 'Epic' ? 'text-violet-400 border-violet-400/20' :
-                          (selectedPlant.rarity ?? 'Common') === 'Rare' ? 'text-water-blue border-water-blue/20' :
-                          (selectedPlant.rarity ?? 'Common') === 'Uncommon' ? 'text-leaf-green border-leaf-green/20' : 'text-text-secondary border-white/5'}`}
-                      >
-                        {(selectedPlant.rarity ?? 'Common').toUpperCase()}
-                      </span>
-                    </div>
-                    <h3 className="text-2xl md:text-4xl font-serif italic text-white premium-gradient-text tracking-tight">
+                {/* Plant header row — compact on mobile */}
+                <div className="flex items-center justify-between gap-2 px-3 py-2 sm:px-6 sm:py-4 md:px-8 md:py-6 border-b border-white/5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] px-2 py-0.5 rounded bg-white/5 text-text-secondary whitespace-nowrap">
+                      {selectedPlant.type}
+                    </span>
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded bg-black/40 border border-white/5 whitespace-nowrap
+                      ${(selectedPlant.rarity ?? 'Common') === 'Legendary' ? 'text-mineral-gold border-mineral-gold/20' :
+                        (selectedPlant.rarity ?? 'Common') === 'Epic' ? 'text-violet-400 border-violet-400/20' :
+                        (selectedPlant.rarity ?? 'Common') === 'Rare' ? 'text-water-blue border-water-blue/20' :
+                        (selectedPlant.rarity ?? 'Common') === 'Uncommon' ? 'text-leaf-green border-leaf-green/20' : 'text-text-secondary border-white/5'}`}
+                    >
+                      {(selectedPlant.rarity ?? 'Common').toUpperCase()}
+                    </span>
+                    <h3 className="text-base sm:text-2xl md:text-4xl font-serif italic text-white premium-gradient-text tracking-tight truncate">
                       {PLANT_STAGES[selectedPlant.stageIndex].name}
                     </h3>
-                    <p className="text-[10px] font-mono text-text-secondary opacity-50">NODE_IDENTITY: {selectedPlant.id}</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="px-4 py-1.5 rounded-full bg-leaf-green/5 border border-leaf-green/20 text-leaf-green text-[10px] font-bold uppercase tracking-widest animate-pulse-soft">
-                      Bio-Synthesis Active
-                    </div>
-                    <button 
-                      onClick={() => setState(p => ({ ...p, selectedPlantIndex: null }))}
-                      className="p-2 rounded-lg bg-white/5 text-text-secondary hover:text-white transition-all border border-white/5"
-                    >
-                      <RefreshCw size={18} />
-                    </button>
+                  <button
+                    onClick={() => setState(p => ({ ...p, selectedPlantIndex: null }))}
+                    className="shrink-0 p-1.5 sm:p-2 rounded-lg bg-white/5 text-text-secondary hover:text-white transition-all border border-white/5"
+                  >
+                    <RefreshCw size={15} />
+                  </button>
+                </div>
+
+                {/* Mobile action buttons — always visible at top */}
+                <div className="md:hidden px-3 pt-3 pb-1">
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedPlant.isHarvestable ? (
+                      <button
+                        onClick={() => handlePlantAction('harvest')}
+                        className="col-span-2 flex items-center justify-center gap-2 bg-mineral-gold text-soil-dark font-bold py-3 rounded-xl active:scale-[0.98] transition-all shadow-lg shadow-mineral-gold/10 uppercase tracking-widest text-xs"
+                      >
+                        <TrendingUp size={16} />
+                        EXTRACT SPECIMEN
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handlePlantAction('research')}
+                          disabled={selectedPlant.water < 5}
+                          className="flex items-center justify-center gap-1.5 bg-leaf-green text-soil-dark font-bold py-3 rounded-xl active:scale-[0.98] transition-all disabled:opacity-30 shadow-lg shadow-leaf-green/10 uppercase tracking-wide text-xs"
+                        >
+                          <Zap size={15} />
+                          RESEARCH
+                        </button>
+                        <button
+                          onClick={() => handlePlantAction('water')}
+                          className="flex items-center justify-center gap-1.5 bg-water-blue text-soil-dark font-bold py-3 rounded-xl active:scale-[0.98] transition-all shadow-lg shadow-water-blue/10 uppercase tracking-wide text-xs"
+                        >
+                          <Droplets size={15} />
+                          HYDRATE
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="h-[260px] sm:h-[360px] md:h-[500px] bg-black/40 rounded-3xl dashed-border relative overflow-hidden group">
+                {/* Compact stats strip on mobile */}
+                <div className="md:hidden grid grid-cols-4 gap-0 px-3 py-2">
+                  {[
+                    { label: 'H₂O', val: selectedPlant.water, max: PLANT_STAGES[selectedPlant.stageIndex].maxWater, color: 'bg-water-blue', text: 'text-water-blue' },
+                    { label: 'NUT', val: Math.round(selectedPlant.nutrients), max: 100, color: 'bg-mineral-gold', text: 'text-mineral-gold' },
+                    { label: 'STR', val: selectedPlant.stress, max: 100, color: 'bg-burn-red', text: 'text-burn-red' },
+                    { label: 'XP', val: selectedPlant.rootStrength, max: PLANT_STAGES[selectedPlant.stageIndex + 1]?.threshold || 1000, color: 'bg-leaf-green', text: 'text-leaf-green' }
+                  ].map(stat => (
+                    <div key={stat.label} className="px-1 py-1 space-y-1">
+                      <div className="flex justify-between text-[8px] font-bold uppercase text-text-secondary opacity-60">
+                        <span>{stat.label}</span>
+                        <span className={stat.text}>{stat.val}</span>
+                      </div>
+                      <div className="h-1 w-full bg-black/40 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(100, (stat.val / stat.max) * 100)}%` }}
+                          className={`h-full ${stat.color}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Main content grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 p-3 sm:p-6 md:p-8 pt-2 sm:pt-4 md:pt-6">
+                  {/* 3D Visualizer — smaller on mobile */}
+                  <div className="h-[160px] sm:h-[280px] md:h-[500px] bg-black/40 rounded-2xl sm:rounded-3xl dashed-border relative overflow-hidden group">
                     {(() => {
                       const currentThreshold = PLANT_STAGES[selectedPlant.stageIndex].threshold;
                       const nextThreshold = PLANT_STAGES[selectedPlant.stageIndex + 1]?.threshold || (currentThreshold * 2);
                       const progress = Math.min(1, Math.max(0, (selectedPlant.rootStrength - currentThreshold) / (nextThreshold - currentThreshold)));
-                      
                       return (
-                        <PlantVisualizer 
-                          stageIndex={selectedPlant.stageIndex} 
+                        <PlantVisualizer
+                          stageIndex={selectedPlant.stageIndex}
                           progress={progress}
                           type={selectedPlant.type}
                           color={selectedPlant.color}
@@ -328,26 +383,19 @@ const App: React.FC = () => {
                       );
                     })()}
                     <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 to-transparent" />
-                    
-                    {/* Active Tools Mini Overlay */}
-                    <div className="absolute top-4 right-4 flex flex-col gap-2">
+                    {/* Active Tools Overlay */}
+                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex flex-col gap-1 sm:gap-2">
                       {state.tools.filter(t => t.type === 'active' && t.level > 0).map(tool => (
                         <button
                           key={tool.id}
                           onClick={() => useActiveTool(tool.id)}
                           disabled={(tool.currentCooldown || 0) > 0}
-                          className={`p-3 rounded-xl backdrop-blur-md transition-all group relative border
-                            ${(tool.currentCooldown || 0) > 0 
-                              ? 'bg-black/40 border-white/5 text-text-secondary opacity-30' 
+                          className={`p-2 sm:p-3 rounded-xl backdrop-blur-md transition-all group relative border
+                            ${(tool.currentCooldown || 0) > 0
+                              ? 'bg-black/40 border-white/5 text-text-secondary opacity-30'
                               : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}
                         >
-                          {tool.id === 'pest-repellent-pulse' ? <Bug size={20} /> : <Database size={20} />}
-                          
-                          <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 glass-panel border border-white/10 text-[9px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest">
-                            {tool.name} 
-                            {(tool.currentCooldown || 0) > 0 && ` (${tool.currentCooldown}c)`}
-                          </div>
-
+                          {tool.id === 'pest-repellent-pulse' ? <Bug size={16} /> : <Database size={16} />}
                           {(tool.currentCooldown || 0) > 0 && (
                             <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl">
                               <span className="text-[10px] font-bold text-white font-mono">{tool.currentCooldown}</span>
@@ -358,7 +406,8 @@ const App: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-between py-2">
+                  {/* Stats + buttons (desktop only buttons) */}
+                  <div className="hidden md:flex flex-col justify-between py-2">
                     <div className="space-y-8">
                       <div className="grid grid-cols-2 gap-x-6 gap-y-8">
                         {[
@@ -373,9 +422,9 @@ const App: React.FC = () => {
                               <span className={stat.text}>{stat.val} / {stat.max}</span>
                             </div>
                             <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
-                              <motion.div 
+                              <motion.div
                                 initial={{ width: 0 }}
-                                animate={{ width: `${(stat.val / stat.max) * 100}%` }}
+                                animate={{ width: `${Math.min(100, (stat.val / stat.max) * 100)}%` }}
                                 className={`h-full ${stat.color} transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,255,255,0.1)]`}
                               />
                             </div>
@@ -393,7 +442,7 @@ const App: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4 w-full mt-8">
                       {selectedPlant.isHarvestable ? (
-                        <button 
+                        <button
                           onClick={() => handlePlantAction('harvest')}
                           className="col-span-2 flex items-center justify-center gap-3 bg-mineral-gold text-soil-dark font-bold py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-mineral-gold/10 uppercase tracking-widest"
                         >
@@ -402,7 +451,7 @@ const App: React.FC = () => {
                         </button>
                       ) : (
                         <>
-                          <button 
+                          <button
                             onClick={() => handlePlantAction('research')}
                             disabled={selectedPlant.water < 5}
                             className="flex items-center justify-center gap-3 bg-leaf-green text-soil-dark font-bold py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 shadow-xl shadow-leaf-green/10 uppercase tracking-[0.1em] text-xs"
@@ -410,7 +459,7 @@ const App: React.FC = () => {
                             <Zap size={18} />
                             RESEARCH
                           </button>
-                          <button 
+                          <button
                             onClick={() => handlePlantAction('water')}
                             className="flex items-center justify-center gap-3 bg-water-blue text-soil-dark font-bold py-4 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-water-blue/10 uppercase tracking-[0.1em] text-xs"
                           >
@@ -424,17 +473,18 @@ const App: React.FC = () => {
                 </div>
               </motion.div>
             ) : (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="glass-panel p-16 flex flex-col items-center justify-center text-center gap-6 text-text-secondary border-dashed border-white/10 hardware-panel"
+                className="glass-panel p-6 sm:p-10 flex flex-col items-center justify-center text-center gap-4 text-text-secondary border-dashed border-white/10 hardware-panel"
               >
-                <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center animate-pulse-soft border border-white/5">
-                  <Sprout size={40} className="light-glow text-leaf-green/50" />
+                <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white/5 flex items-center justify-center animate-pulse-soft border border-white/5">
+                  <Sprout size={28} className="light-glow text-leaf-green/50 sm:hidden" />
+                  <Sprout size={40} className="light-glow text-leaf-green/50 hidden sm:block" />
                 </div>
-                <div className="space-y-2 max-w-sm">
-                  <h3 className="text-xl font-bold text-white tracking-tight">Systems Standby</h3>
-                  <p className="text-xs leading-relaxed opacity-60">Initialize neural link by selecting a specimen from the bio-grid below to access growth telemetry and synthesis options.</p>
+                <div className="space-y-1 sm:space-y-2 max-w-sm">
+                  <h3 className="text-base sm:text-xl font-bold text-white tracking-tight">Systems Standby</h3>
+                  <p className="text-xs leading-relaxed opacity-60">Select a specimen from the bio-grid below to access growth telemetry and synthesis options.</p>
                 </div>
               </motion.div>
             )}
