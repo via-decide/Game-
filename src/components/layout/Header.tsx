@@ -11,8 +11,8 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ state, nextDay, logout }) => {
   return (
-    <div className="w-full flex flex-col md:flex-row justify-between items-center glass-panel p-4 px-6 md:px-8 gap-4 mb-6">
-      <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-8">
+    <div className="w-full flex flex-col md:flex-row justify-between items-center glass-panel p-3 px-4 md:px-8 gap-3 md:gap-4 mb-4 md:mb-6">
+      <div className="flex flex-wrap justify-center md:justify-start gap-3 md:gap-8 w-full md:w-auto">
         <div className="flex flex-col">
           <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Temporal Cycle</span>
           <span className="text-lg md:text-xl font-mono font-bold text-leaf-green">DAY {state.day}</span>
@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ state, nextDay, logout }) => {
         </div>
         
         {/* Weather Indicator */}
-        <div className="flex items-center gap-3 px-4 py-1 bg-black/40 rounded-xl border border-white/5 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-xl border border-white/5 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div 
               key={state.weather.type}
@@ -59,7 +59,7 @@ const Header: React.FC<HeaderProps> = ({ state, nextDay, logout }) => {
         </div>
       </div>
       
-      <div className="flex items-center gap-3 w-full md:w-auto">
+      <div className="flex items-center gap-2 w-full md:w-auto">
         {state.user && (
           <button 
             onClick={logout}
