@@ -33,15 +33,26 @@
   --accent: #4ADE80;
 }
 
+html {
+  background: #050505; /* fallback before CSS vars resolve */
+}
+
 body {
   background-color: var(--bg);
-  background-image: 
+  background-image:
     radial-gradient(circle at 50% 0%, rgba(74, 222, 128, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.05) 0%, transparent 50%);
   color: var(--text-primary);
   font-family: var(--font-sans);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  /* Prevent overscroll showing white on iOS */
+  overscroll-behavior: none;
+}
+
+#root {
+  background: #050505;
+  min-height: 100vh;
 }
 
 .glass-panel {
