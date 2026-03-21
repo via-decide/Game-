@@ -24,7 +24,7 @@ import {
 export const useGameState = (user: { uid: string; displayName: string | null; email: string | null } | null, addLog: (msg: string, type?: string) => void) => {
   const [state, setState] = useState<GameState>({
     day: 1,
-    credits: 100,
+    credits: 500,
     dataSeeds: 0,
     orchards: [
       { id: 'orchard-1', name: 'Primary Orchard', plants: Array(9).fill(null), isUnlocked: true, unlockCost: 0 },
@@ -87,7 +87,7 @@ export const useGameState = (user: { uid: string; displayName: string | null; em
           uid: user.uid,
           displayName: user.displayName,
           email: user.email,
-          credits: 100,
+          credits: 500,
           dataSeeds: 0,
           day: 1,
           upgrades: INITIAL_UPGRADES,

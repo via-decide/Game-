@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Sprout, 
-  FlaskConical, 
-  Store, 
-  Droplets, 
-  Zap, 
-  Bug, 
-  TrendingUp, 
+import {
+  Sprout,
+  FlaskConical,
+  Store,
+  Droplets,
+  Zap,
+  Bug,
+  TrendingUp,
   RefreshCw,
   Database,
   ShieldCheck,
   AlertCircle,
   LogIn,
   Trophy,
-  Medal
+  Medal,
+  ExternalLink
 } from 'lucide-react';
 
 import { useAuth } from './hooks/useAuth';
@@ -110,12 +111,22 @@ const App: React.FC = () => {
   } = useGameState(user, addLog);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showNoCredits, setShowNoCredits] = useState(false);
+  const [creditsCTADismissed, setCreditsCTADismissed] = useState(false);
 
   useEffect(() => {
     if (user && !localStorage.getItem(`onboarded_${user.uid}`)) {
       setShowOnboarding(true);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user && state.credits < 50 && !creditsCTADismissed) {
+      setShowNoCredits(true);
+    } else {
+      setShowNoCredits(false);
+    }
+  }, [state.credits, user, creditsCTADismissed]);
 
   const handleOnboardingComplete = () => {
     if (user) {
@@ -128,7 +139,7 @@ const App: React.FC = () => {
   const selectedPlant = state.selectedPlantIndex !== null ? activeOrchard.plants[state.selectedPlantIndex] : null;
 
   return (
-    <div className="min-h-screen p-6 flex flex-col items-center gap-6 max-w-7xl mx-auto relative overflow-hidden">
+    <div className="min-h-screen p-3 sm:p-6 flex flex-col items-center gap-4 sm:gap-6 max-w-7xl mx-auto relative overflow-x-hidden">
       <AnimatePresence>
         {showOnboarding && (
           <motion.div 
@@ -165,6 +176,59 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
 
+      {/* No Credits CTA Modal */}
+      <AnimatePresence>
+        {showNoCredits && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="hardware-panel max-w-sm w-full p-6 space-y-5 border-mineral-gold/30 ring-1 ring-mineral-gold/20"
+            >
+              <div className="flex items-center gap-3 text-mineral-gold">
+                <AlertCircle size={28} />
+                <h2 className="text-lg font-bold uppercase tracking-widest">Credits Depleted</h2>
+              </div>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                You've run out of credits! Earn more by completing missions in our partner games and bring your rewards back here.
+              </p>
+              <div className="space-y-3">
+                <a
+                  href="https://github.com/via-decide/skillhex-mission-control"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between w-full px-4 py-3 bg-leaf-green/10 border border-leaf-green/30 rounded-xl text-leaf-green text-xs font-bold uppercase tracking-widest hover:bg-leaf-green/20 transition-all group"
+                >
+                  <span>Skillhex Mission Control</span>
+                  <ExternalLink size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                </a>
+                <a
+                  href="https://github.com/via-decide/Mars-Terminal-Rover-Simulator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between w-full px-4 py-3 bg-burn-red/10 border border-burn-red/30 rounded-xl text-burn-red text-xs font-bold uppercase tracking-widest hover:bg-burn-red/20 transition-all group"
+                >
+                  <span>Mars Terminal Rover</span>
+                  <ExternalLink size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                </a>
+              </div>
+              <button
+                onClick={() => { setCreditsCTADismissed(true); setShowNoCredits(false); }}
+                className="w-full py-2 text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-white transition-all border border-white/10 rounded-lg"
+              >
+                Dismiss
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Header state={state} nextDay={nextDay} logout={handleLogout} />
 
       <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -175,7 +239,30 @@ const App: React.FC = () => {
         />
 
         {/* Main Content Area */}
-        <div className="lg:col-span-11 space-y-6">
+        <div className="lg:col-span-11 space-y-4 sm:space-y-6">
+          {/* Low-credits banner (shown after modal dismissed) */}
+          <AnimatePresence>
+            {user && state.credits < 50 && creditsCTADismissed && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 rounded-xl bg-mineral-gold/10 border border-mineral-gold/30 text-mineral-gold text-[10px] font-bold uppercase tracking-widest"
+              >
+                <span className="flex items-center gap-2"><AlertCircle size={14} /> Credits low — earn more from partner games</span>
+                <div className="flex gap-2">
+                  <a href="https://github.com/via-decide/skillhex-mission-control" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-2 py-1 rounded bg-leaf-green/20 text-leaf-green hover:bg-leaf-green/30 transition-all">
+                    Skillhex <ExternalLink size={10} />
+                  </a>
+                  <a href="https://github.com/via-decide/Mars-Terminal-Rover-Simulator" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-2 py-1 rounded bg-burn-red/20 text-burn-red hover:bg-burn-red/30 transition-all">
+                    Mars Rover <ExternalLink size={10} />
+                  </a>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {/* Hero Section: Selected Specimen */}
           <AnimatePresence mode="wait">
             {selectedPlant ? (
@@ -184,7 +271,7 @@ const App: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="glass-panel p-6 md:p-8 space-y-8 hardware-panel"
+                className="glass-panel p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-8 hardware-panel"
               >
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-6">
                   <div className="space-y-1">
@@ -193,12 +280,12 @@ const App: React.FC = () => {
                         {selectedPlant.type}
                       </span>
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded bg-black/40 border border-white/5
-                        ${selectedPlant.rarity === 'Legendary' ? 'text-mineral-gold border-mineral-gold/20' : 
-                          selectedPlant.rarity === 'Epic' ? 'text-violet-400 border-violet-400/20' : 
-                          selectedPlant.rarity === 'Rare' ? 'text-water-blue border-water-blue/20' : 
-                          selectedPlant.rarity === 'Uncommon' ? 'text-leaf-green border-leaf-green/20' : 'text-text-secondary border-white/5'}`}
+                        ${(selectedPlant.rarity ?? 'Common') === 'Legendary' ? 'text-mineral-gold border-mineral-gold/20' :
+                          (selectedPlant.rarity ?? 'Common') === 'Epic' ? 'text-violet-400 border-violet-400/20' :
+                          (selectedPlant.rarity ?? 'Common') === 'Rare' ? 'text-water-blue border-water-blue/20' :
+                          (selectedPlant.rarity ?? 'Common') === 'Uncommon' ? 'text-leaf-green border-leaf-green/20' : 'text-text-secondary border-white/5'}`}
                       >
-                        {selectedPlant.rarity.toUpperCase()}
+                        {(selectedPlant.rarity ?? 'Common').toUpperCase()}
                       </span>
                     </div>
                     <h3 className="text-2xl md:text-4xl font-serif italic text-white premium-gradient-text tracking-tight">
@@ -220,7 +307,7 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="h-[400px] md:h-[500px] bg-black/40 rounded-3xl dashed-border relative overflow-hidden group">
+                  <div className="h-[260px] sm:h-[360px] md:h-[500px] bg-black/40 rounded-3xl dashed-border relative overflow-hidden group">
                     {(() => {
                       const currentThreshold = PLANT_STAGES[selectedPlant.stageIndex].threshold;
                       const nextThreshold = PLANT_STAGES[selectedPlant.stageIndex + 1]?.threshold || (currentThreshold * 2);
