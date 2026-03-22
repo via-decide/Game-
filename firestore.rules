@@ -75,7 +75,11 @@ service cloud.firestore {
         plant.pests is number &&
         plant.pestImmunity is number &&
         plant.stageIndex is number &&
-        plant.isHarvestable is bool
+        plant.isHarvestable is bool &&
+        (plant.get('rarity', 'Common') in ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary']) &&
+        (plant.get('growthSpeedMultiplier', 1) is number) &&
+        (plant.get('yieldMultiplier', 1) is number) &&
+        (!('color' in plant) || plant.color is string)
       );
     }
 
@@ -84,8 +88,8 @@ service cloud.firestore {
              orchard.name is string && orchard.name.size() < 100 &&
              orchard.plants is list && orchard.plants.size() == 9 &&
              orchard.plants.all(p, isValidPlant(p)) &&
-             orchard.isUnlocked is bool &&
-             orchard.unlockCost is number;
+             (orchard.get('isUnlocked', true) is bool) &&
+             (orchard.get('unlockCost', 0) is number);
     }
 
     function isValidUser(data) {
@@ -97,12 +101,11 @@ service cloud.firestore {
              (data.get('orchards', []).size() <= 10) &&
              (data.get('orchards', []).all(o, isValidOrchard(o))) &&
              (data.get('upgrades', {}) is map) &&
-             (data.get('upgrades', {}).keys().size() <= 10) &&
              (data.get('tools', []) is list) &&
-             (data.get('tools', []).size() <= 20) &&
              (data.get('weather', {}) is map) &&
-             (data.get('displayName', '') == null || (data.get('displayName', '') is string && data.get('displayName', '').size() < 100)) &&
-             (data.get('email', '') == null || (data.get('email', '') is string && data.get('email', '').size() < 100));
+             (data.get('role', 'player') in ['player', 'admin']) &&
+             (!('lastUpdated' in data) || data.lastUpdated is timestamp) &&
+             (data.get('discoveredTypes', []) is list);
     }
 
     function isValidTransfer(data) {
@@ -120,18 +123,14 @@ service cloud.firestore {
       // Users can only read their own profile
       allow read: if isOwner(userId) || isAdmin();
       
-      // Allow listing for:
-      // 1. Transfer target lookup — filtered by uid, limit 1
-      // 2. Leaderboard — ordered by credits, limit <= 10
+      // Allow searching for other users by UID for transfers, and leaderboard queries
       allow list: if isAuthenticated() && (
-                    // Transfer: search by uid
-                    (request.query.limit <= 1 &&
-                     request.query.filters.size() == 1 &&
-                     request.query.filters[0].op == '==' &&
+                    (request.query.limit <= 1 && 
+                     request.query.filters.size() == 1 && 
+                     request.query.filters[0].op == '==' && 
                      request.query.filters[0].path == 'uid') ||
-                    // Leaderboard: top players by credits
-                    (request.query.limit <= 10 &&
-                     request.query.filters.size() == 0)
+                    (request.query.limit <= 10 && 
+                     (request.query.orders[0].path == 'credits' || request.query.orders[0].path == 'dataSeeds'))
                   );
 
       allow create: if isOwner(userId) && 
@@ -142,7 +141,14 @@ service cloud.firestore {
                       (isOwner(userId) && 
                        uidUnchanged() &&
                        isValidUser(request.resource.data) &&
-                       request.resource.data.get('role', resource.data.role) == resource.data.role) || 
+                       request.resource.data.get('role', resource.data.get('role', 'player')) == resource.data.get('role', 'player')) || 
+                      (!isOwner(userId) && 
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['credits']) &&
+                       request.resource.data.credits > resource.data.credits &&
+                       (request.resource.data.credits - resource.data.credits) == 
+                       (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.credits - 
+                        getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.credits)
+                      ) ||
                       isAdmin()
                     );
     }

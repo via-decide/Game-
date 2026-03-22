@@ -14,9 +14,12 @@
         "upgrades": { "type": "object", "description": "Global upgrades state" },
         "tools": { "type": "array", "description": "List of owned tools and their levels" },
         "orchards": { "type": "array", "description": "List of orchards and their plants" },
-        "weather": { "type": "object", "description": "Current weather conditions" }
+        "weather": { "type": "object", "description": "Current weather conditions" },
+        "role": { "type": "string", "enum": ["player", "admin"], "description": "User role" },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "Last time the state was saved" },
+        "discoveredTypes": { "type": "array", "items": { "type": "string" }, "description": "List of discovered plant types" }
       },
-      "required": ["uid", "credits", "dataSeeds", "day", "orchards", "tools", "weather"]
+      "required": ["uid", "credits", "dataSeeds", "day", "orchards", "tools", "weather", "role", "discoveredTypes"]
     },
     "Transfer": {
       "title": "Credit Transfer",

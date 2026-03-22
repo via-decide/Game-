@@ -76,13 +76,15 @@ export type GameState = {
   selectedPlantIndex: number | null;
   upgrades: GlobalUpgrades;
   tools: Tool[];
-  activeTab: 'orchard' | 'lab' | 'market' | 'tools' | 'achievements' | 'leaderboard';
+  activeTab: 'orchard' | 'lab' | 'market' | 'tools' | 'leaderboard' | 'discovery' | 'archives' | 'admin';
   weather: Weather;
   user: {
     uid: string;
     displayName: string | null;
     email: string | null;
+    role?: 'player' | 'admin';
   } | null;
   isAuthReady: boolean;
   lastToolEffect: string | null;
+  discoveredTypes: string[];
 };
