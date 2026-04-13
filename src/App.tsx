@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GameState, Plant, GlobalUpgrades, Orchard, Tool, Weather } from './types';
 import { PLANT_STAGES, INITIAL_UPGRADES, SHOP_ITEMS, INITIAL_TOOLS, getRandomWeather, BASE_PLANT_TYPES } from './constants';
+import { BPReward } from './types/battlepass';
+import { BATTLE_PASS_PREMIUM_COST, BATTLE_PASS_TIERS, INITIAL_BATTLE_PASS_STATE } from './constants/battlepass';
 import PlantCard from './components/PlantCard';
 import PlantVisualizer from './components/PlantVisualizer';
 import { 
@@ -26,6 +28,7 @@ import {
   Library,
   BookOpen,
   Trophy,
+  Medal,
   Sun,
   CloudRain,
   CloudLightning,
@@ -160,6 +163,7 @@ const App: React.FC = () => {
     isAuthReady: false,
     lastToolEffect: null,
     discoveredTypes: [],
+    battlePass: INITIAL_BATTLE_PASS_STATE,
   });
 
   const [logs, setLogs] = useState<{ msg: string; type: string }[]>([]);
@@ -197,6 +201,7 @@ const App: React.FC = () => {
           tools: state.tools,
           weather: state.weather,
           discoveredTypes: state.discoveredTypes,
+          battlePass: state.battlePass,
         });
         updateActivity(); // Reset timer after save
         addLog('Game auto-saved (inactivity).', 'system');
@@ -204,7 +209,7 @@ const App: React.FC = () => {
     }, 30000); // Check every 30 seconds
 
     return () => clearInterval(interval);
-  }, [state.user?.uid, state.day, state.credits, state.dataSeeds, state.orchards, state.upgrades, state.tools, updateActivity]);
+  }, [state.user?.uid, state.day, state.credits, state.dataSeeds, state.orchards, state.upgrades, state.tools, state.battlePass, updateActivity]);
 
   const handleLogin = async () => {
     setIsLoginLoading(true);
@@ -282,6 +287,7 @@ const App: React.FC = () => {
           tools: data.tools ?? prev.tools,
           weather: data.weather ?? prev.weather,
           discoveredTypes: data.discoveredTypes ?? prev.discoveredTypes,
+          battlePass: data.battlePass ?? prev.battlePass,
           user: prev.user ? { ...prev.user, role: data.role || (prev.user.email === 'via.decide@gmail.com' ? 'admin' : 'player') } : null
         }));
       } else {
@@ -299,6 +305,7 @@ const App: React.FC = () => {
           weather: state.weather,
           role: state.user!.email === 'via.decide@gmail.com' ? 'admin' : 'player',
           discoveredTypes: [],
+          battlePass: INITIAL_BATTLE_PASS_STATE,
           createdAt: serverTimestamp()
         };
         setDoc(userDocRef, initialState).catch(e => handleFirestoreError(e, OperationType.WRITE, `users/${state.user!.uid}`));
@@ -355,6 +362,7 @@ const App: React.FC = () => {
       return nextState;
     });
     addLog('Sold 10 🧬 for 50 🪙.', 'success');
+    addBattlePassXP(20, 'Archive Exchange');
   };
 
   const handleTransferCredits = async () => {
@@ -520,6 +528,115 @@ const App: React.FC = () => {
     return tool.level * tool.bonusValue;
   };
 
+  const getBattlePassLevelByXP = (xp: number) => {
+    let level = 1;
+    for (const tier of BATTLE_PASS_TIERS) {
+      if (xp >= tier.xpRequired) level = tier.level;
+    }
+    return level;
+  };
+
+  const addBattlePassXP = useCallback((amount: number, reason: string) => {
+    setState(prev => {
+      const nextXP = prev.battlePass.currentXP + amount;
+      const nextLevel = getBattlePassLevelByXP(nextXP);
+      const leveledUp = nextLevel > prev.battlePass.currentLevel;
+      const nextBattlePass = {
+        ...prev.battlePass,
+        currentXP: nextXP,
+        currentLevel: nextLevel,
+      };
+      saveState({ battlePass: nextBattlePass });
+      if (leveledUp) {
+        addLog(`Season Pass level up! Reached level ${nextLevel}.`, 'success');
+      }
+      return { ...prev, battlePass: nextBattlePass };
+    });
+    addLog(`Season XP +${amount} (${reason})`, 'system');
+  }, [addLog]);
+
+  const applyBattlePassReward = (prev: GameState, reward: BPReward) => {
+    let credits = prev.credits;
+    let dataSeeds = prev.dataSeeds;
+    let discoveredTypes = prev.discoveredTypes;
+    let tools = prev.tools;
+
+    if (reward.type === 'credits') credits += reward.amount || 0;
+    if (reward.type === 'seeds') dataSeeds += reward.amount || 0;
+    if (reward.type === 'species' && !discoveredTypes.includes(reward.id)) {
+      discoveredTypes = [...discoveredTypes, reward.id];
+    }
+    if (reward.type === 'tool') {
+      tools = prev.tools.map(t => {
+        if (t.id !== reward.id) return t;
+        return { ...t, level: Math.min(t.maxLevel, t.level + (reward.amount || 1)) };
+      });
+    }
+
+    return { credits, dataSeeds, discoveredTypes, tools };
+  };
+
+  const claimBattlePassReward = (level: number, premium: boolean) => {
+    const tier = BATTLE_PASS_TIERS.find(t => t.level === level);
+    if (!tier) return;
+
+    setState(prev => {
+      if (prev.battlePass.currentLevel < level) {
+        addLog(`Season Pass level ${level} is still locked.`, 'warn');
+        return prev;
+      }
+      if (premium && !prev.battlePass.isPremium) {
+        addLog('Premium Season Pass required for this reward.', 'warn');
+        return prev;
+      }
+      const alreadyClaimed = premium
+        ? prev.battlePass.claimedPremium.includes(level)
+        : prev.battlePass.claimedFree.includes(level);
+      if (alreadyClaimed) return prev;
+
+      const reward = premium ? tier.premiumReward : tier.freeReward;
+      const applied = applyBattlePassReward(prev, reward);
+      const nextBattlePass = {
+        ...prev.battlePass,
+        claimedFree: premium ? prev.battlePass.claimedFree : [...prev.battlePass.claimedFree, level],
+        claimedPremium: premium ? [...prev.battlePass.claimedPremium, level] : prev.battlePass.claimedPremium,
+      };
+      saveState({
+        battlePass: nextBattlePass,
+        credits: applied.credits,
+        dataSeeds: applied.dataSeeds,
+        discoveredTypes: applied.discoveredTypes,
+        tools: applied.tools,
+      });
+      addLog(`Claimed ${premium ? 'Premium' : 'Free'} reward: ${reward.name}.`, 'success');
+      if (reward.type === 'skin' || reward.type === 'title') {
+        addLog(`Cosmetic unlocked: ${reward.name}.`, 'info');
+      }
+      return {
+        ...prev,
+        ...applied,
+        battlePass: nextBattlePass,
+      };
+    });
+  };
+
+  const unlockPremiumBattlePass = () => {
+    if (state.battlePass.isPremium) {
+      addLog('Premium Season Pass already unlocked.', 'warn');
+      return;
+    }
+    if (state.credits < BATTLE_PASS_PREMIUM_COST) {
+      addLog(`Need ${BATTLE_PASS_PREMIUM_COST} credits to unlock Premium Season Pass.`, 'danger');
+      return;
+    }
+    setState(prev => {
+      const nextBattlePass = { ...prev.battlePass, isPremium: true };
+      saveState({ credits: prev.credits - BATTLE_PASS_PREMIUM_COST, battlePass: nextBattlePass });
+      return { ...prev, credits: prev.credits - BATTLE_PASS_PREMIUM_COST, battlePass: nextBattlePass };
+    });
+    addLog('Premium Season Pass unlocked.', 'success');
+  };
+
   const handlePlantAction = (action: 'research' | 'water' | 'fertilize' | 'pesticide' | 'harvest') => {
     if (state.selectedPlantIndex === null || !selectedPlant) return;
 
@@ -552,6 +669,7 @@ const App: React.FC = () => {
         
         const nextState = { ...prev, orchards: newOrchards, credits, dataSeeds, selectedPlantIndex: null };
         saveState({ orchards: newOrchards, credits, dataSeeds });
+        addBattlePassXP(35, 'Harvest');
         return nextState;
       }
 
@@ -598,6 +716,7 @@ const App: React.FC = () => {
         }
 
         addLog(`Research complete: +${finalG} roots, +${10 + creditBonus} credits.`, 'success');
+        addBattlePassXP(15, 'Research Action');
       }
 
       if (action === 'water') {
@@ -703,6 +822,7 @@ const App: React.FC = () => {
       addLog(`Day ${prev.day + 1} started. Weather shifted to ${newWeather.name}.`, 'system');
       const nextState = { ...prev, day: prev.day + 1, orchards: newOrchards, weather: newWeather };
       saveState({ day: prev.day + 1, orchards: newOrchards, weather: newWeather });
+      addBattlePassXP(10, 'Cycle Complete');
       return nextState;
     });
   };
@@ -757,6 +877,7 @@ const App: React.FC = () => {
       return nextState;
     });
     addLog('New plot cleared and seeded.', 'success');
+    addBattlePassXP(8, 'Plot Expansion');
   };
 
   const unlockOrchard = (id: string) => {
@@ -897,6 +1018,7 @@ const App: React.FC = () => {
       saveState({ credits: prev.credits - 100, orchards: newOrchards, discoveredTypes: newDiscovered });
       setBreedingParents([]);
       addLog(`Success! A new ${newPlant.rarity} hybrid has been created.`, 'success');
+      addBattlePassXP(25, 'Cross-Pollination');
       return nextState;
     });
   };
@@ -1038,6 +1160,12 @@ const App: React.FC = () => {
             className={`flex-1 lg:flex-none p-4 rounded-xl flex items-center justify-center transition-all ${state.activeTab === 'leaderboard' ? 'bg-mineral-gold text-soil-dark' : 'bg-card-bg text-text-secondary hover:text-white'}`}
           >
             <Trophy size={24} />
+          </button>
+          <button 
+            onClick={() => setState(p => ({ ...p, activeTab: 'battlepass' }))}
+            className={`flex-1 lg:flex-none p-4 rounded-xl flex items-center justify-center transition-all ${state.activeTab === 'battlepass' ? 'bg-violet-500 text-white' : 'bg-card-bg text-text-secondary hover:text-white'}`}
+          >
+            <Medal size={24} />
           </button>
           <button 
             onClick={() => setState(p => ({ ...p, activeTab: 'discovery' }))}
@@ -1615,6 +1743,99 @@ const App: React.FC = () => {
                         ))}
                       </div>
                     )}
+                  </motion.div>
+                )}
+
+                {state.activeTab === 'battlepass' && (
+                  <motion.div
+                    key="battlepass"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-bark-brown pb-4 gap-4">
+                      <div className="flex items-center gap-3">
+                        <Medal size={24} className="text-violet-400" />
+                        <div>
+                          <h2 className="font-serif text-2xl italic">Season Pass</h2>
+                          <p className="text-[10px] text-text-secondary uppercase tracking-widest">{state.battlePass.seasonName}</p>
+                        </div>
+                      </div>
+                      {!state.battlePass.isPremium && (
+                        <button
+                          onClick={unlockPremiumBattlePass}
+                          className="bg-violet-500 hover:bg-violet-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                        >
+                          UNLOCK PREMIUM ({BATTLE_PASS_PREMIUM_COST}🪙)
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="hardware-panel p-5 space-y-4 border-violet-500/30">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span>Level {state.battlePass.currentLevel}</span>
+                        <span>{state.battlePass.currentXP} XP</span>
+                      </div>
+                      <div className="h-3 w-full bg-black/40 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-violet-500 transition-all duration-500"
+                          style={{
+                            width: `${Math.min(100, (() => {
+                              const currentTier = BATTLE_PASS_TIERS.find(t => t.level === state.battlePass.currentLevel);
+                              const nextTier = BATTLE_PASS_TIERS.find(t => t.level === state.battlePass.currentLevel + 1);
+                              if (!currentTier || !nextTier) return 100;
+                              const delta = nextTier.xpRequired - currentTier.xpRequired;
+                              const progressed = state.battlePass.currentXP - currentTier.xpRequired;
+                              return (progressed / delta) * 100;
+                            })())}%`
+                          }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-text-secondary uppercase tracking-widest">
+                        Season Window: {state.battlePass.startDate} to {state.battlePass.endDate}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      {BATTLE_PASS_TIERS.map(tier => {
+                        const unlocked = state.battlePass.currentLevel >= tier.level;
+                        const freeClaimed = state.battlePass.claimedFree.includes(tier.level);
+                        const premiumClaimed = state.battlePass.claimedPremium.includes(tier.level);
+                        return (
+                          <div key={tier.level} className="hardware-panel p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-bold">Tier {tier.level}</h3>
+                              <span className="text-[10px] text-text-secondary font-mono">{tier.xpRequired} XP</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="bg-black/20 border border-bark-brown/30 rounded-xl p-3 space-y-2">
+                                <p className="text-[10px] uppercase tracking-widest text-text-secondary">Free Reward</p>
+                                <p className="text-xs font-bold">{tier.freeReward.name}</p>
+                                <button
+                                  onClick={() => claimBattlePassReward(tier.level, false)}
+                                  disabled={!unlocked || freeClaimed}
+                                  className="w-full bg-leaf-green/20 text-leaf-green border border-leaf-green/30 py-2 rounded-lg text-[10px] font-bold disabled:opacity-40"
+                                >
+                                  {freeClaimed ? 'CLAIMED' : unlocked ? 'CLAIM FREE' : 'LOCKED'}
+                                </button>
+                              </div>
+                              <div className="bg-black/20 border border-violet-500/30 rounded-xl p-3 space-y-2">
+                                <p className="text-[10px] uppercase tracking-widest text-text-secondary">Premium Reward</p>
+                                <p className="text-xs font-bold">{tier.premiumReward.name}</p>
+                                <button
+                                  onClick={() => claimBattlePassReward(tier.level, true)}
+                                  disabled={!unlocked || premiumClaimed || !state.battlePass.isPremium}
+                                  className="w-full bg-violet-500/20 text-violet-300 border border-violet-500/40 py-2 rounded-lg text-[10px] font-bold disabled:opacity-40"
+                                >
+                                  {premiumClaimed ? 'CLAIMED' : !state.battlePass.isPremium ? 'PREMIUM ONLY' : unlocked ? 'CLAIM PREMIUM' : 'LOCKED'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </motion.div>
                 )}
 
