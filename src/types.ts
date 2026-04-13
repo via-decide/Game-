@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { BattlePassState } from './types/battlepass';
+
 export type PlantStage = {
   threshold: number;
   name: string;
@@ -76,7 +78,7 @@ export type GameState = {
   selectedPlantIndex: number | null;
   upgrades: GlobalUpgrades;
   tools: Tool[];
-  activeTab: 'orchard' | 'lab' | 'market' | 'tools' | 'leaderboard' | 'discovery' | 'archives' | 'admin';
+  activeTab: 'orchard' | 'lab' | 'market' | 'tools' | 'leaderboard' | 'battlepass' | 'discovery' | 'archives' | 'admin';
   weather: Weather;
   user: {
     uid: string;
@@ -87,4 +89,5 @@ export type GameState = {
   isAuthReady: boolean;
   lastToolEffect: string | null;
   discoveredTypes: string[];
+  battlePass: BattlePassState;
 };
