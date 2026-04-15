@@ -34,7 +34,9 @@ import {
   CloudLightning,
   Thermometer,
   Cloud,
-  Search
+  Search,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -71,6 +73,18 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: any;
+}
+
+interface PassportSession {
+  passportId: string;
+  skillHexScore: number;
+  marsScore: number;
+}
+
+interface WorkspacePanel {
+  id: 'prompt-console' | 'reasoning-loop' | 'execution-trace' | 'knowledge-graph' | 'system-telemetry';
+  title: string;
+  body: React.ReactNode;
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -174,6 +188,20 @@ const App: React.FC = () => {
   const [breedingParents, setBreedingParents] = useState<number[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
+  const [passportSession, setPassportSession] = useState<PassportSession>({
+    passportId: 'Unavailable',
+    skillHexScore: 0,
+    marsScore: 0,
+  });
+  const [isPassportLoading, setIsPassportLoading] = useState(false);
+  const [passportError, setPassportError] = useState('');
+  const [openPanels, setOpenPanels] = useState<Record<string, boolean>>({
+    'prompt-console': true,
+    'reasoning-loop': true,
+    'execution-trace': false,
+    'knowledge-graph': false,
+    'system-telemetry': true,
+  });
   const lastActivityRef = React.useRef(Date.now());
 
   const updateActivity = useCallback(() => {
@@ -267,6 +295,45 @@ const App: React.FC = () => {
     });
     return () => unsubscribe();
   }, [addLog]);
+
+  useEffect(() => {
+    if (!state.user?.uid) return;
+
+    const fetchPassportSession = async () => {
+      setIsPassportLoading(true);
+      setPassportError('');
+
+      try {
+        const response = await fetch('/passport/session', {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Passport session request failed (${response.status})`);
+        }
+
+        const data = await response.json();
+        const resolvedPassportId = data.passportId || data.passport_id || state.user?.uid || 'Unavailable';
+        const resolvedSkillHexScore = Number(data.skillHexScore ?? data.skillhex_score ?? data.skill_hex_score ?? 0);
+        const resolvedMarsScore = Number(data.marsScore ?? data.mars_score ?? 0);
+
+        setPassportSession({
+          passportId: resolvedPassportId,
+          skillHexScore: Number.isFinite(resolvedSkillHexScore) ? resolvedSkillHexScore : 0,
+          marsScore: Number.isFinite(resolvedMarsScore) ? resolvedMarsScore : 0,
+        });
+      } catch (error: any) {
+        setPassportError(error.message || 'Unable to load Passport session.');
+      } finally {
+        setIsPassportLoading(false);
+      }
+    };
+
+    void fetchPassportSession();
+  }, [state.user?.uid]);
 
   // Firestore Sync
   useEffect(() => {
@@ -1058,6 +1125,68 @@ const App: React.FC = () => {
     addLog(`Applied ${item.name} to ${selectedPlant.type}.`, 'success');
   };
 
+
+  const workspacePanels: WorkspacePanel[] = [
+    {
+      id: 'prompt-console',
+      title: 'Prompt Console',
+      body: (
+        <div className="space-y-2">
+          <p className="text-xs text-text-secondary">Active user: {state.user?.displayName || 'Guest'}</p>
+          <p className="text-xs text-text-secondary">Current tab: {state.activeTab}</p>
+          <p className="text-xs text-text-secondary">Session integrity: {passportError ? 'degraded' : 'stable'}</p>
+        </div>
+      ),
+    },
+    {
+      id: 'reasoning-loop',
+      title: 'Reasoning Loop',
+      body: (
+        <ol className="list-decimal list-inside text-xs text-text-secondary space-y-1">
+          <li>Read Passport session context.</li>
+          <li>Correlate telemetry from active orchard and tools.</li>
+          <li>Recommend next action based on stress and hydration.</li>
+        </ol>
+      ),
+    },
+    {
+      id: 'execution-trace',
+      title: 'Execution Trace',
+      body: (
+        <div className="space-y-1 font-mono text-[11px]">
+          {logs.slice(0, 5).map((log, index) => (
+            <div key={`${log.msg}-${index}`} className="text-text-secondary">{log.msg}</div>
+          ))}
+          {logs.length === 0 && <div className="text-text-secondary">No execution trace entries yet.</div>}
+        </div>
+      ),
+    },
+    {
+      id: 'knowledge-graph',
+      title: 'Knowledge Graph',
+      body: (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div className="bg-black/20 rounded-lg p-2 border border-bark-brown/30">Passport → Session</div>
+          <div className="bg-black/20 rounded-lg p-2 border border-bark-brown/30">Session → Orchard State</div>
+          <div className="bg-black/20 rounded-lg p-2 border border-bark-brown/30">Orchard → Logs</div>
+          <div className="bg-black/20 rounded-lg p-2 border border-bark-brown/30">Logs → Actions</div>
+        </div>
+      ),
+    },
+    {
+      id: 'system-telemetry',
+      title: 'System Telemetry',
+      body: (
+        <div className="grid grid-cols-2 gap-3 text-xs text-text-secondary">
+          <p>Day: <span className="text-text-primary">{state.day}</span></p>
+          <p>Weather: <span className="text-text-primary">{state.weather.name}</span></p>
+          <p>Credits: <span className="text-text-primary">{state.credits}</span></p>
+          <p>Seeds: <span className="text-text-primary">{state.dataSeeds}</span></p>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="min-h-screen p-6 flex flex-col items-center gap-6 max-w-6xl mx-auto">
       {/* Header Stats */}
@@ -1125,6 +1254,50 @@ const App: React.FC = () => {
             <RefreshCw size={16} />
             END CYCLE
           </button>
+        </div>
+      </div>
+
+      <div className="w-full hardware-panel p-4 md:p-6 space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-b border-bark-brown/40 pb-3">
+          <div>
+            <h2 className="text-sm md:text-base font-bold uppercase tracking-widest">Passport Workspace</h2>
+            <p className="text-[11px] text-text-secondary">Identity linked from GET /passport/session</p>
+          </div>
+          {isPassportLoading && <span className="text-xs text-water-blue font-bold">Loading session...</span>}
+          {passportError && <span className="text-xs text-burn-red font-bold">{passportError}</span>}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-black/20 border border-bark-brown/30 rounded-xl p-3">
+            <p className="text-[10px] text-text-secondary uppercase tracking-widest">Passport ID</p>
+            <p className="text-sm font-mono font-bold break-all">{passportSession.passportId}</p>
+          </div>
+          <div className="bg-black/20 border border-bark-brown/30 rounded-xl p-3">
+            <p className="text-[10px] text-text-secondary uppercase tracking-widest">SkillHex score</p>
+            <p className="text-sm font-mono font-bold text-leaf-green">{passportSession.skillHexScore}</p>
+          </div>
+          <div className="bg-black/20 border border-bark-brown/30 rounded-xl p-3">
+            <p className="text-[10px] text-text-secondary uppercase tracking-widest">Mars score</p>
+            <p className="text-sm font-mono font-bold text-water-blue">{passportSession.marsScore}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {workspacePanels.map(panel => {
+            const isOpen = openPanels[panel.id] ?? false;
+            return (
+              <div key={panel.id} className="bg-black/20 border border-bark-brown/30 rounded-xl">
+                <button
+                  onClick={() => setOpenPanels(prev => ({ ...prev, [panel.id]: !isOpen }))}
+                  className="w-full flex items-center justify-between p-3 text-left"
+                >
+                  <span className="text-xs font-bold uppercase tracking-widest">{panel.title}</span>
+                  {isOpen ? <ChevronUp size={16} className="text-text-secondary" /> : <ChevronDown size={16} className="text-text-secondary" />}
+                </button>
+                {isOpen && <div className="px-3 pb-3">{panel.body}</div>}
+              </div>
+            );
+          })}
         </div>
       </div>
 
