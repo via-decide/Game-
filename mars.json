@@ -1,0 +1,6 @@
+{
+  "app": "Game",
+  "version": "1.0",
+  "type": "web-game",
+  "entry": "index.html"
+}

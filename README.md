@@ -1,20 +1,98 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Game (SkillHex Runner)
 
-# Run and deploy your AI Studio app
+A deployable vanilla JavaScript web game built for local play and GitHub Pages hosting.
 
-This contains everything you need to run your app locally.
+## Project Structure
 
-View your app in AI Studio: https://ai.studio/apps/85eb7505-69b3-4260-8622-48ed5e744348
+```text
+.
+├── index.html
+├── style.css
+├── game.js
+├── assets/
+│   ├── icons/
+│   ├── sounds/
+│   └── sprites/
+├── ui/
+│   ├── controls.js
+│   ├── menu.js
+│   └── score.js
+├── logic/
+│   ├── engine.js
+│   ├── physics.js
+│   └── state.js
+└── mars.json
+```
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+Because this is a pure HTML/CSS/JS project, no npm or build step is required.
 
+1. Clone the repository.
+2. Open `index.html` in your browser, **or** run a simple static server:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+python3 -m http.server 8000
+```
+
+Then open `http://localhost:8000`.
+
+## Deploy on GitHub Pages
+
+1. Push this repository to GitHub.
+2. In **Settings → Pages**, set source to the main branch root.
+3. Ensure `index.html` remains in the repository root.
+4. Access the deployed game at:
+   `https://via-decide.github.io/Game-/`
+
+## Game Loop Architecture
+
+The game uses `requestAnimationFrame` with this flow:
+
+1. `updateGameState(...)`
+   - updates player motion
+   - updates hazard physics
+   - checks collisions and game-over conditions
+2. `renderGame(...)`
+   - redraws all visible entities
+3. UI render (`scoreboard.render(...)`)
+4. loop continues via `requestAnimationFrame(gameLoop)`
+
+## SkillHex Integration
+
+On game over, a score payload is emitted:
+
+```js
+{
+  skill: 'logic',
+  points: 120,
+  timestamp: 1710000000000
+}
+```
+
+Event name:
+
+```js
+window.dispatchEvent(new CustomEvent('skillhex-score', { detail: playerScore }));
+```
+
+This allows future SkillHex score tracking listeners.
+
+## Mars Integration
+
+`mars.json` provides optional launcher metadata:
+
+```json
+{
+  "app": "Game",
+  "version": "1.0",
+  "type": "web-game",
+  "entry": "index.html"
+}
+```
+
+## Performance Notes
+
+- Non-blocking render loop uses `requestAnimationFrame`.
+- DOM updates are limited to score and overlay state.
+- Hazard sprite is lazy-loaded on first game start.
