@@ -4,7 +4,7 @@ export function updateGameState(state, controls, dt, dimensions) {
   if (!state.running || state.paused || state.gameOver) return;
 
   state.score += dt * 10;
-  state.speed += dt * 2;
+  state.speed = Math.min(state.speed + dt * 2, 500);
   state.spawnTimer += dt * 1000;
 
   if (state.spawnTimer >= state.spawnEveryMs) {

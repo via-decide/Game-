@@ -5,19 +5,23 @@ import { initMenu } from './ui/menu.js';
 import { initScoreboard, emitSkillHexScore } from './ui/score.js';
 
 const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas?.getContext('2d');
+if (!ctx) {
+  throw new Error('Canvas 2D context not available');
+}
+
 const dimensions = { width: canvas.width, height: canvas.height };
 
 let state = createInitialState();
 let spriteImage = null;
-const controls = initControls();
-const scoreboard = initScoreboard();
+let controls;
+let scoreboard;
+let menu;
 
-const menu = initMenu({
-  onStart: startGame,
-  onRestart: restartGame,
-  onPauseToggle: togglePause,
-});
+function validateEnvironment() {
+  if (!canvas) throw new Error('Canvas element missing');
+  if (!ctx) throw new Error('Canvas context unavailable');
+}
 
 function lazyLoadAssets() {
   if (spriteImage) return Promise.resolve(spriteImage);
@@ -40,22 +44,25 @@ async function startGame() {
   menu.hideStart();
   menu.hideEnd();
   menu.setPauseLabel(false);
+  menu.setPauseEnabled(state.running);
 }
 
-function restartGame() {
+async function restartGame() {
   const priorBest = state.bestScore;
   state = resetState(state);
   state.bestScore = Math.max(priorBest, state.bestScore);
   scoreboard.render(state);
   menu.hideEnd();
-  startGame();
+  await startGame();
 }
 
 function togglePause() {
-  if (!state.running && !state.paused) return;
+  if (!state.running) return;
+
   state.paused = !state.paused;
   state.running = !state.paused && !state.gameOver;
   menu.setPauseLabel(state.paused);
+  menu.setPauseEnabled(state.running);
 }
 
 function handleGameOver() {
@@ -76,13 +83,31 @@ function gameLoop(timestamp = 0) {
 
   if (state.gameOver) {
     handleGameOver();
-    state.gameOver = false;
+    state.hazards = [];
     state.paused = true;
+    menu.setPauseEnabled(state.running);
   }
 
   requestAnimationFrame(gameLoop);
 }
 
-menu.showStart();
-scoreboard.render(state);
-requestAnimationFrame(gameLoop);
+function initGame() {
+  validateEnvironment();
+
+  controls = initControls();
+  scoreboard = initScoreboard();
+  menu = initMenu({
+    onStart: startGame,
+    onRestart: restartGame,
+    onPauseToggle: togglePause,
+  });
+
+  menu.showStart();
+  menu.setPauseEnabled(state.running);
+  scoreboard.render(state);
+  requestAnimationFrame(gameLoop);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  initGame();
+});

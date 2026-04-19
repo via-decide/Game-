@@ -1,7 +1,9 @@
+import { getElement } from './dom.js';
+
 export function initScoreboard() {
-  const scoreEl = document.getElementById('score');
-  const bestEl = document.getElementById('best-score');
-  const finalScoreEl = document.getElementById('final-score');
+  const scoreEl = getElement('score');
+  const bestEl = getElement('best-score');
+  const finalScoreEl = getElement('final-score');
 
   return {
     render(state) {

@@ -1,14 +1,18 @@
+import { getElement } from './dom.js';
+
 export function initMenu({ onStart, onRestart, onPauseToggle }) {
-  const startScreen = document.getElementById('start-screen');
-  const endScreen = document.getElementById('end-screen');
-  const startBtn = document.getElementById('start-btn');
-  const restartBtn = document.getElementById('restart-btn');
-  const playAgainBtn = document.getElementById('play-again-btn');
-  const pauseBtn = document.getElementById('pause-btn');
+  const startScreen = getElement('start-screen');
+  const endScreen = getElement('end-screen');
+  const startBtn = getElement('start-btn');
+  const restartBtn = getElement('restart-btn');
+  const playAgainBtn = getElement('play-again-btn');
+  const pauseBtn = getElement('pause-btn');
+
+  pauseBtn.disabled = true;
 
   startBtn.addEventListener('click', onStart);
-  restartBtn.addEventListener('click', onRestart);
-  playAgainBtn.addEventListener('click', onRestart);
+  restartBtn.addEventListener('click', () => onRestart());
+  playAgainBtn.addEventListener('click', () => onRestart());
   pauseBtn.addEventListener('click', onPauseToggle);
 
   return {
@@ -27,6 +31,9 @@ export function initMenu({ onStart, onRestart, onPauseToggle }) {
     },
     setPauseLabel(paused) {
       pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+    },
+    setPauseEnabled(running) {
+      pauseBtn.disabled = !running;
     },
   };
 }
