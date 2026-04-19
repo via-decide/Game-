@@ -1,113 +1,121 @@
-import { createInitialState, resetState } from './logic/state.js';
-import { updateGameState, renderGame } from './logic/engine.js';
-import { initControls } from './ui/controls.js';
+import { Engine } from './engine/core/engine.js';
+import MainScene from './src/scenes/MainScene.js';
 import { initMenu } from './ui/menu.js';
 import { initScoreboard, emitSkillHexScore } from './ui/score.js';
+import { loadGame, saveGame } from './src/save/saveManager.js';
 
 const canvas = document.getElementById('game-canvas');
-const ctx = canvas?.getContext('2d');
-if (!ctx) {
-  throw new Error('Canvas 2D context not available');
-}
+if (!canvas) throw new Error('Canvas element missing');
 
-const dimensions = { width: canvas.width, height: canvas.height };
+const engine = new Engine({
+  canvas,
+  physics: true,
+  renderer: 'webgl',
+});
 
-let state = createInitialState();
-let spriteImage = null;
-let controls;
-let scoreboard;
+engine.renderer.setFeatures({
+  lighting: true,
+  particleSystem: true,
+  shadows: true,
+  postProcessing: true,
+  bloom: true,
+});
+
+const saved = loadGame();
+const runtime = {
+  bestScore: saved.bestScore,
+  lastScore: saved.lastScore,
+  runs: saved.runs,
+  currentScore: 0,
+  running: false,
+  paused: false,
+};
+
+const scoreboard = initScoreboard();
 let menu;
 
-function validateEnvironment() {
-  if (!canvas) throw new Error('Canvas element missing');
-  if (!ctx) throw new Error('Canvas context unavailable');
-}
+const scene = new MainScene({
+  onScore: (score) => {
+    runtime.currentScore = score;
+    renderScore();
+  },
+  onGameOver: (score) => {
+    runtime.running = false;
+    runtime.currentScore = score;
+    runtime.lastScore = Math.floor(score);
+    runtime.runs += 1;
+    runtime.bestScore = Math.max(runtime.bestScore, Math.floor(score));
+    saveGame(runtime);
+    emitSkillHexScore(score);
+    renderScore();
+    menu?.showEnd();
+    menu?.setPauseEnabled(false);
+  },
+});
 
-function lazyLoadAssets() {
-  if (spriteImage) return Promise.resolve(spriteImage);
-
-  spriteImage = new Image();
-  spriteImage.loading = 'lazy';
-
-  return new Promise((resolve) => {
-    spriteImage.src = './assets/sprites/hazard.svg';
-    spriteImage.onload = () => resolve(spriteImage);
-    spriteImage.onerror = () => resolve(null);
+function renderScore() {
+  scoreboard.render({
+    score: runtime.currentScore,
+    bestScore: runtime.bestScore,
   });
 }
 
+async function bootAssets() {
+  await engine.assets.load({
+    textures: ['./assets/sprites/hazard.svg'],
+    audio: [],
+  });
+  const hazardImg = engine.assets.textures.get('./assets/sprites/hazard.svg');
+  if (hazardImg) engine.assets.textures.set('hazard', hazardImg);
+}
+
 async function startGame() {
-  await lazyLoadAssets();
-  state.running = true;
-  state.paused = false;
-  state.gameOver = false;
+  runtime.running = true;
+  runtime.paused = false;
+  runtime.currentScore = 0;
+  scene.activate();
+  renderScore();
   menu.hideStart();
   menu.hideEnd();
   menu.setPauseLabel(false);
-  menu.setPauseEnabled(state.running);
+  menu.setPauseEnabled(true);
+  engine.resume();
 }
 
 async function restartGame() {
-  const priorBest = state.bestScore;
-  state = resetState(state);
-  state.bestScore = Math.max(priorBest, state.bestScore);
-  scoreboard.render(state);
-  menu.hideEnd();
+  if (!engine.scene) return;
   await startGame();
 }
 
 function togglePause() {
-  if (!state.running) return;
-
-  state.paused = !state.paused;
-  state.running = !state.paused && !state.gameOver;
-  menu.setPauseLabel(state.paused);
-  menu.setPauseEnabled(state.running);
-}
-
-function handleGameOver() {
-  state.bestScore = Math.max(state.bestScore, Math.floor(state.score));
-  localStorage.setItem('skillhex-best-score', String(state.bestScore));
-  emitSkillHexScore(state.score);
-  scoreboard.render(state);
-  menu.showEnd();
-}
-
-function gameLoop(timestamp = 0) {
-  const elapsed = Math.min((timestamp - state.lastFrameTime) / 1000 || 0, 0.05);
-  state.lastFrameTime = timestamp;
-
-  updateGameState(state, controls, elapsed, dimensions);
-  renderGame(ctx, state, dimensions, spriteImage);
-  scoreboard.render(state);
-
-  if (state.gameOver) {
-    handleGameOver();
-    state.hazards = [];
-    state.paused = true;
-    menu.setPauseEnabled(state.running);
+  if (!runtime.running) return;
+  runtime.paused = !runtime.paused;
+  if (runtime.paused) {
+    engine.pause();
+  } else {
+    engine.resume();
   }
-
-  requestAnimationFrame(gameLoop);
+  menu.setPauseLabel(runtime.paused);
 }
 
-function initGame() {
-  validateEnvironment();
-
-  controls = initControls();
-  scoreboard = initScoreboard();
+async function boot() {
+  await bootAssets();
+  await engine.loadScene(scene);
   menu = initMenu({
     onStart: startGame,
     onRestart: restartGame,
     onPauseToggle: togglePause,
   });
-
   menu.showStart();
-  menu.setPauseEnabled(state.running);
-  scoreboard.render(state);
-  requestAnimationFrame(gameLoop);
+  menu.setPauseEnabled(false);
+  renderScore();
+  engine.debug.enable();
+  engine.start();
+  engine.pause();
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  initGame();
+  boot().catch((err) => {
+    console.error('Engine boot failed', err);
+  });
 });
