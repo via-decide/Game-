@@ -92,6 +92,14 @@ export class Engine {
       if (this.physics) this.physics.step(this.scene, dt);
       this.effects.update(dt);
       this.debug.tick(dt);
+      
+      // Camera follow logic
+      if (this.renderer.camera.target) {
+        const target = this.renderer.camera.target;
+        // Smooth follow (lerp)
+        this.renderer.camera.x += (target.x + target.width/2 - this.renderer.camera.x) * 5 * dt;
+        this.renderer.camera.y += (target.y + target.height/2 - this.renderer.camera.y) * 5 * dt;
+      }
     }
 
     this.renderer.beginFrame();

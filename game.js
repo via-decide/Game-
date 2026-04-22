@@ -10,7 +10,7 @@ if (!canvas) throw new Error('Canvas element missing');
 const engine = new Engine({
   canvas,
   physics: true,
-  renderer: 'webgl',
+  renderer: '2d',
 });
 
 engine.renderer.setFeatures({

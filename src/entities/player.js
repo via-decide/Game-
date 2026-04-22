@@ -13,6 +13,7 @@ export class PlayerController extends Component {
   update() {
     if (!this.entity || !this.input) return;
     this.entity.velocityX = this.input.axes.x * this.maxSpeed;
+    this.entity.velocityY = this.input.axes.y * this.maxSpeed;
   }
 }
 
@@ -20,13 +21,13 @@ export function createPlayer(scene, options = {}) {
   const canvas = scene.engine.canvas;
   const player = new Entity({
     tag: 'player',
-    x: options.x ?? (canvas.width - 40) / 2,
-    y: options.y ?? canvas.height - 60,
+    x: options.x ?? 0,
+    y: options.y ?? 0,
     width: 40,
     height: 40,
   });
 
-  player.addComponent(new Rigidbody({ mass: 1, gravity: false, clampToBounds: true }));
+  player.addComponent(new Rigidbody({ mass: 1, gravity: false, clampToBounds: false }));
   player.addComponent(new SpriteRenderer({
     color: '#6ec6ff',
     shape: 'rect',

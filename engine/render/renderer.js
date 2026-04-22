@@ -49,7 +49,10 @@ export class Renderer {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, this.width, this.height);
     }
-    ctx.translate(this.camera.shakeX, this.camera.shakeY);
+    ctx.translate(
+      this.width / 2 - this.camera.x + this.camera.shakeX,
+      this.height / 2 - this.camera.y + this.camera.shakeY
+    );
   }
 
   endFrame() {
