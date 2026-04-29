@@ -1,7 +1,7 @@
 You are working in repository via-decide/Game- on branch main.
 
 MISSION
-Write ZAYVORA_GAME_RENDER_PIPELINE_V1.md - Rendering system using WebGL/Three.js
+Write ZAYVORA_GAME_CODE_VALIDATION_V1.md - Pre-merge validation system
 
 CONSTRAINTS
 Preserve existing code; prefer additive changes.

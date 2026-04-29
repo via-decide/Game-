@@ -1,9 +1,9 @@
-Branch: simba/write-zayvoragamerenderpipelinev1md---rendering-
-Title: Write ZAYVORA_GAME_RENDER_PIPELINE_V1.md - Rendering system using Web...
+Branch: simba/write-zayvoragamecodevalidationv1md---pre-merge-
+Title: Write ZAYVORA_GAME_CODE_VALIDATION_V1.md - Pre-merge validation system
 
 ## Summary
 - Repo orchestration task for via-decide/Game-
-- Goal: Write ZAYVORA_GAME_RENDER_PIPELINE_V1.md - Rendering system using WebGL/Three.js
+- Goal: Write ZAYVORA_GAME_CODE_VALIDATION_V1.md - Pre-merge validation system
 
 ## Testing Checklist
 - [ ] Run unit/integration tests
