@@ -1,9 +1,9 @@
-Branch: simba/write-zayvoragameaivialogicintegrationv1md---npc
-Title: Write ZAYVORA_GAME_AI_VIALOGIC_INTEGRATION_V1.md - NPC intelligence u...
+Branch: simba/write-zayvoragamecoreruntimev1md---base-game-run
+Title: Write ZAYVORA_GAME_CORE_RUNTIME_V1.md - Base game runtime and system ...
 
 ## Summary
 - Repo orchestration task for via-decide/Game-
-- Goal: Write ZAYVORA_GAME_AI_VIALOGIC_INTEGRATION_V1.md - NPC intelligence using ViaLogic
+- Goal: Write ZAYVORA_GAME_CORE_RUNTIME_V1.md - Base game runtime and system architecture
 
 ## Testing Checklist
 - [ ] Run unit/integration tests
