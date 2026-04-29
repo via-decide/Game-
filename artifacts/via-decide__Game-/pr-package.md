@@ -1,9 +1,9 @@
-Branch: simba/write-zayvoragamecodevalidationv1md---pre-merge-
-Title: Write ZAYVORA_GAME_CODE_VALIDATION_V1.md - Pre-merge validation system
+Branch: simba/write-zayvoragameaivialogicintegrationv1md---npc
+Title: Write ZAYVORA_GAME_AI_VIALOGIC_INTEGRATION_V1.md - NPC intelligence u...
 
 ## Summary
 - Repo orchestration task for via-decide/Game-
-- Goal: Write ZAYVORA_GAME_CODE_VALIDATION_V1.md - Pre-merge validation system
+- Goal: Write ZAYVORA_GAME_AI_VIALOGIC_INTEGRATION_V1.md - NPC intelligence using ViaLogic
 
 ## Testing Checklist
 - [ ] Run unit/integration tests

@@ -4,7 +4,7 @@ TARGET
 Validate and repair only the files touched by the previous implementation.
 
 TASK
-Write ZAYVORA_GAME_CODE_VALIDATION_V1.md - Pre-merge validation system
+Write ZAYVORA_GAME_AI_VIALOGIC_INTEGRATION_V1.md - NPC intelligence using ViaLogic
 
 RULES
 1. Audit touched files first and identify regressions.
