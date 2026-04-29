@@ -4,7 +4,7 @@ TARGET
 Validate and repair only the files touched by the previous implementation.
 
 TASK
-Write ZAYVORA_GAME_WORLD_STREAMING_V1.md - Dynamic world loading system
+Write ZAYVORA_GAME_RENDER_PIPELINE_V1.md - Rendering system using WebGL/Three.js
 
 RULES
 1. Audit touched files first and identify regressions.
