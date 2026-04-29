@@ -1,9 +1,9 @@
-Branch: simba/write-zayvoragameworldstreamingv1md---dynamic-wo
-Title: Write ZAYVORA_GAME_WORLD_STREAMING_V1.md - Dynamic world loading system
+Branch: simba/write-zayvoragamerenderpipelinev1md---rendering-
+Title: Write ZAYVORA_GAME_RENDER_PIPELINE_V1.md - Rendering system using Web...
 
 ## Summary
 - Repo orchestration task for via-decide/Game-
-- Goal: Write ZAYVORA_GAME_WORLD_STREAMING_V1.md - Dynamic world loading system
+- Goal: Write ZAYVORA_GAME_RENDER_PIPELINE_V1.md - Rendering system using WebGL/Three.js
 
 ## Testing Checklist
 - [ ] Run unit/integration tests
