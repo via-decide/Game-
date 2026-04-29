@@ -1,7 +1,7 @@
 You are working in repository via-decide/Game- on branch main.
 
 MISSION
-Write ZAYVORA_GAME_CODE_VALIDATION_V1.md - Pre-merge validation system
+Write ZAYVORA_GAME_AI_VIALOGIC_INTEGRATION_V1.md - NPC intelligence using ViaLogic
 
 CONSTRAINTS
 Preserve existing code; prefer additive changes.
