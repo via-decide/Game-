@@ -1,7 +1,7 @@
 You are working in repository via-decide/Game- on branch main.
 
 MISSION
-Write ZAYVORA_GAME_AI_VIALOGIC_INTEGRATION_V1.md - NPC intelligence using ViaLogic
+Write ZAYVORA_GAME_CORE_RUNTIME_V1.md - Base game runtime and system architecture
 
 CONSTRAINTS
 Preserve existing code; prefer additive changes.
