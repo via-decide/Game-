@@ -142,9 +142,10 @@ function renderPortfolio() {
   
   const totalSkillsSum = logicLevel + strategyLevel;
   const metrics = Portfolio.calculateMetrics(uid, totalSkillsSum);
+  const growthStage = Portfolio.getGrowthStage(metrics.readinessScore);
   
   const scoreValEl = document.getElementById('port-readiness-val');
-  if (scoreValEl) scoreValEl.textContent = `${metrics.readinessScore}%`;
+  if (scoreValEl) scoreValEl.textContent = growthStage;
   
   const streakEl = document.getElementById('port-streak');
   if (streakEl) streakEl.textContent = `${metrics.streak} Days`;
