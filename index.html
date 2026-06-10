@@ -21,6 +21,47 @@
         </div>
       </section>
 
+      <!-- Shop Screen (Item Shop Modal) -->
+      <section id="shop-screen" class="overlay" aria-live="polite">
+        <div class="panel glass shop-panel">
+          <div class="shop-header">
+            <h2>ORCHARD SHOP</h2>
+            <button id="close-shop-btn" class="btn close-btn" aria-label="Close shop">✕</button>
+          </div>
+          <div class="credits-display">YOUR WALLET: <span id="shop-credits">0</span> 🪙</div>
+          <div class="shop-grid">
+            <div class="shop-card" data-item="fertilizer">
+              <span class="item-icon">🧪</span>
+              <span class="item-title">Bio-Fertilizer</span>
+              <span class="item-desc">Reduces growth timers of the next crop by 40%</span>
+              <button class="btn buy-btn" data-item="fertilizer" data-cost="30">30 🪙</button>
+            </div>
+            <div class="shop-card" data-item="elixir">
+              <span class="item-icon">⚡</span>
+              <span class="item-title">Stamina Elixir</span>
+              <span class="item-desc">Restores 50 Stamina units instantly</span>
+              <button class="btn buy-btn" data-item="elixir" data-cost="20">20 🪙</button>
+            </div>
+            <div class="shop-card" data-item="corn_seed">
+              <span class="item-icon">🌾</span>
+              <span class="item-title">Corn Seed License</span>
+              <span class="item-desc">Unlocks Electric Corn planting rights permanently</span>
+              <button class="btn buy-btn" data-item="corn_seed" data-cost="50">50 🪙</button>
+            </div>
+            <div class="shop-card" data-item="berry_seed">
+              <span class="item-icon">🍓</span>
+              <span class="item-title">Berry Seed License</span>
+              <span class="item-desc">Unlocks Mineral Berry planting rights permanently</span>
+              <button class="btn buy-btn" data-item="berry_seed" data-cost="120">120 🪙</button>
+            </div>
+          </div>
+          <div class="inventory-display">
+            <h3>INVENTORY</h3>
+            <p>Fertilizers: <span id="inv-fertilizer">0</span> | Stamina Potions: <span id="inv-elixir">0</span></p>
+          </div>
+        </div>
+      </section>
+
       <!-- Game Start Screen -->
       <section id="start-screen" class="overlay visible" aria-live="polite">
         <div class="panel glass">
@@ -44,6 +85,9 @@
           <div class="hud-item timer-pill">
             ⏰ Time: <span id="timer-val">90</span>s
           </div>
+          <div class="hud-item weather-pill">
+            🌤️ Weather: <span id="weather-val">Sunny</span>
+          </div>
         </div>
 
         <div class="hud-right">
@@ -58,6 +102,8 @@
             </select>
           </div>
           <div class="hud-actions">
+            <button id="use-fertilizer-btn" class="btn" title="Apply fertilizer (0 available)">🧪 Use Fertilizer</button>
+            <button id="shop-btn" class="btn">🛒 Shop</button>
             <button id="pause-btn" class="btn">Pause</button>
             <button id="restart-btn" class="btn">Restart</button>
           </div>
@@ -67,6 +113,32 @@
       <!-- Interactive Canvas -->
       <section class="canvas-wrap">
         <canvas id="game-canvas" width="800" height="500" aria-label="Game canvas"></canvas>
+      </section>
+
+      <!-- Orchard Commons Panel -->
+      <section class="commons-panel glass" aria-label="Orchard Commons">
+        <div class="dock-header">
+          <span class="dock-line"></span>
+          <h3>ORCHARD COMMONS</h3>
+          <span class="dock-line"></span>
+        </div>
+        <div class="commons-inputs">
+          <div class="circle-input-wrap">
+            <input type="text" id="circle-input" placeholder="Join Circle ID/Name" class="commons-input" />
+            <button id="join-circle-btn" class="btn">Join Circle</button>
+            <span id="circle-status" class="commons-status">No circle joined</span>
+          </div>
+          <div class="gift-input-wrap">
+            <input type="text" id="recipient-input" placeholder="Recipient UID" class="commons-input" />
+            <select id="gift-type" class="gift-select">
+              <option value="wheat">🌾 Wheat Seeds</option>
+              <option value="corn">⚡ Corn Seeds</option>
+              <option value="berry">🍓 Berry Seeds</option>
+            </select>
+            <button id="gift-btn" class="btn primary">Gift Seeds</button>
+            <span id="gift-status" class="commons-status"></span>
+          </div>
+        </div>
       </section>
 
       <!-- Portals Dock -->

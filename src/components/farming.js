@@ -69,11 +69,20 @@ export class FarmingInteractor extends Component {
     const seedSelect = document.getElementById('seed-select');
     const selectedSeed = seedSelect ? seedSelect.value : 'wheat';
 
+    // Read active weather from scene
+    const weather = this.entity.scene.activeWeather || 'Sunny';
+
     if (currentTile === TILE_TYPES.GRASS || currentTile === TILE_TYPES.DIRT) {
       // TILL SOIL
-      if (this.consumeStamina(5)) {
+      // Acid Rain doubles tilling stamina cost (10 instead of 5)
+      const tillCost = (weather === 'Acid Rain') ? 10 : 5;
+      
+      if (this.consumeStamina(tillCost)) {
         worldRenderer.setTile(tileX, tileY, TILE_TYPES.TILLED);
         this.triggerVibration(100);
+        if (weather === 'Acid Rain') {
+          this.showFloatMessage('Tilled (Heavy Mud!)', px, py, '#ffa726');
+        }
       } else {
         this.showFloatMessage('Exhausted!', px, py, '#ff1744');
       }
@@ -100,19 +109,68 @@ export class FarmingInteractor extends Component {
           label = '🌾 Wheat';
         }
 
-        worldRenderer.setTile(tileX, tileY, plantType);
-        this.showFloatMessage(`Planted ${label}`, px, py - 20, '#00e5ff');
+        // Apply Weather growth modifier
+        if (weather === 'Solar Flare') {
+          growthDuration = growthDuration * 0.5; // grows 50% faster
+        }
 
-        // Schedule growth
+        // Apply Fertilizer modifier
+        let appliedFertilizer = false;
+        if (window.OrchardRuntime && window.OrchardRuntime.activeFertilizer) {
+          growthDuration = growthDuration * 0.6; // 40% reduction
+          window.OrchardRuntime.activeFertilizer = false;
+          appliedFertilizer = true;
+          
+          // Hydrate use fertilizer button HUD label
+          const useFertBtn = document.getElementById('use-fertilizer-btn');
+          if (useFertBtn) {
+            const count = window.OrchardRuntime.inventory.fertilizer;
+            useFertBtn.textContent = `🧪 Use Fertilizer (${count})`;
+            useFertBtn.disabled = count <= 0;
+          }
+        }
+
+        worldRenderer.setTile(tileX, tileY, plantType);
+        
+        if (appliedFertilizer) {
+          this.showFloatMessage(`Planted with Fertilizer!`, px, py - 20, '#00e5ff');
+        } else {
+          this.showFloatMessage(`Planted ${label}`, px, py - 20, '#f0f4fc');
+        }
+
+        // Schedule growth & subsequent decay timer
         setTimeout(() => {
           if (worldRenderer.getTile(tileX, tileY) === plantType) {
             worldRenderer.setTile(tileX, tileY, grownType);
-            // Dynamic spark effect on grow
+            
+            // Dynamic grow effect
             this.entity.scene.engine.effects.emitParticles({
               x: tileX * TILE_SIZE + TILE_SIZE/2,
               y: tileY * TILE_SIZE + TILE_SIZE/2,
               count: 6, color: '#ffffff', speed: 40, life: 0.3, size: 2
             });
+
+            // Schedule decay timer
+            // Solar Flare causes rapid crop decay (6s instead of 12s)
+            const decayDuration = (weather === 'Solar Flare') ? 6000 : 12000;
+            setTimeout(() => {
+              const currentGrownTile = worldRenderer.getTile(tileX, tileY);
+              if (currentGrownTile === grownType) {
+                worldRenderer.setTile(tileX, tileY, TILE_TYPES.DIRT);
+                
+                const decayLabel = (weather === 'Solar Flare') ? 'Crop Burnt!' : 'Crop Decayed!';
+                const decayColor = (weather === 'Solar Flare') ? '#ffa726' : '#777777';
+                
+                this.showFloatMessage(decayLabel, tileX * TILE_SIZE + TILE_SIZE/2, tileY * TILE_SIZE + TILE_SIZE/2, decayColor);
+                
+                // Ash particle pop
+                this.entity.scene.engine.effects.emitParticles({
+                  x: tileX * TILE_SIZE + TILE_SIZE/2,
+                  y: tileY * TILE_SIZE + TILE_SIZE/2,
+                  count: 10, color: '#4a3b32', speed: 30, life: 0.5, size: 2
+                });
+              }
+            }, decayDuration);
           }
         }, growthDuration);
       } else {
