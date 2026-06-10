@@ -12,14 +12,28 @@
   --danger: #ff1744;
   --font-title: 'Orbitron', system-ui, sans-serif;
   --font-body: 'Outfit', system-ui, sans-serif;
+  --bg: #08111f;
+  --panel: #111b2f;
+  --panel-strong: #182744;
+  --text: #f4f7ff;
+  --muted: #9fb2d6;
+  --accent: #66e0ff;
+  --accent-dark: #07364a;
+  --danger: #ff6b8a;
+  --cell: #14233d;
+  --cell-border: rgba(102, 224, 255, 0.25);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: none;
 }
 
+html,
 body {
   font-family: var(--font-body);
   background: radial-gradient(circle at top, #0d1b31, var(--bg));
@@ -27,10 +41,33 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   padding-bottom: 2rem;
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(102, 224, 255, 0.18),
+      transparent 32rem
+    ),
+    linear-gradient(180deg, #0c1730, var(--bg));
+  color: var(--text);
 }
 
 .app-shell {
-  max-width: 1000px;
+  width: min(100vw, 32rem);
+  min-height: 100dvh;
   margin: 0 auto;
   padding: 1.5rem 1rem;
   display: flex;
@@ -139,6 +176,45 @@ body {
 .crop-selector select option {
   background: #0d121f;
   color: var(--text);
+  padding: max(0.75rem, env(safe-area-inset-top)) 0.75rem
+    max(0.75rem, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  gap: 0.75rem;
+}
+
+.top-bar,
+.command-panel,
+.debug-panel {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hud-card,
+.status-panel {
+  background: rgba(17, 27, 47, 0.9);
+  border: 1px solid rgba(102, 224, 255, 0.28);
+  border-radius: 0.85rem;
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.25);
+}
+
+.hud-card {
+  flex: 1 1 9rem;
+  padding: 0.7rem 0.8rem;
+  text-align: center;
+  font-weight: 800;
+}
+
+.status-panel {
+  padding: 0.7rem 0.85rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.status-panel p {
+  margin: 0.2rem 0;
 }
 
 .hud-actions {
@@ -195,11 +271,85 @@ body {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(102, 224, 255, 0.35);
+  background: var(--panel-strong);
+  color: var(--text);
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+  font-weight: 800;
 }
 
-#game-canvas {
-  width: 100%;
-  height: auto;
+.btn.primary {
+  background: var(--accent);
+  color: #03111a;
+}
+
+.btn.danger {
+  border-color: rgba(255, 107, 138, 0.55);
+  color: #ffeaf0;
+}
+
+.btn.ghost {
+  color: var(--muted);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.grid-shell {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+.base-grid {
+  width: min(94vw, 30rem, 68dvh);
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  gap: 0.18rem;
+  padding: 0.35rem;
+  border: 2px solid rgba(102, 224, 255, 0.32);
+  border-radius: 1rem;
+  background:
+    linear-gradient(rgba(5, 12, 24, 0.76), rgba(5, 12, 24, 0.76)),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(10% - 0.18rem),
+      rgba(102, 224, 255, 0.22) calc(10% - 0.18rem) 10%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 calc(10% - 0.18rem),
+      rgba(102, 224, 255, 0.22) calc(10% - 0.18rem) 10%
+    );
+  background-blend-mode: normal, screen, screen;
+}
+
+.grid-cell {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--cell-border);
+  border-radius: 0.38rem;
+  background: linear-gradient(180deg, #183052, var(--cell));
+  color: var(--text);
+  font-size: clamp(1rem, 5.4vw, 1.8rem);
+  line-height: 1;
+}
+
+.grid-cell.occupied {
+  position: relative;
+  cursor: pointer;
+}
+
+.building-icon {
   display: block;
   background: linear-gradient(180deg, #060e1b, #0c1220);
   image-rendering: pixelated;
@@ -207,7 +357,23 @@ body {
 
 /* Overlay & screens styling */
 .overlay {
+}
+
+.building-level {
   position: absolute;
+  right: 0.12rem;
+  bottom: 0.1rem;
+  padding: 0.08rem 0.18rem;
+  border-radius: 0.25rem;
+  background: rgba(3, 17, 26, 0.82);
+  color: var(--accent);
+  font-size: clamp(0.42rem, 1.9vw, 0.7rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.building-modal {
+  position: fixed;
   inset: 0;
   background: rgba(3, 5, 10, 0.85);
   backdrop-filter: blur(8px);
@@ -534,4 +700,63 @@ body {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
+}
+
+.building-modal[hidden] {
+  display: none;
+}
+
+.modal-card {
+  width: min(92vw, 22rem);
+  padding: 1rem;
+  border: 1px solid rgba(102, 224, 255, 0.45);
+  border-radius: 1rem;
+  background: var(--panel);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.45);
+}
+
+.modal-card h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.25rem;
+}
+
+.modal-card p {
+  margin: 0.35rem 0;
+  color: var(--muted);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.offline-modal .modal-card {
+  text-align: center;
+}
+
+.offline-modal .modal-actions {
+  justify-content: center;
+}
+
+@media (max-width: 420px) {
+  .app-shell {
+    gap: 0.55rem;
+    padding-inline: 0.55rem;
+  }
+
+  .btn,
+  .hud-card {
+    font-size: 0.88rem;
+    padding-inline: 0.6rem;
+  }
+}
+
+.grid-cell.selected-building {
+  border-color: #ffd84d;
+  box-shadow:
+    inset 0 0 0 0.14rem rgba(255, 216, 77, 0.95),
+    0 0 0.6rem rgba(255, 216, 77, 0.45);
+  background: linear-gradient(180deg, rgba(255, 216, 77, 0.28), #20314f);
 }

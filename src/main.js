@@ -1,0 +1,112 @@
+import { GameLoop, calculateOfflineProgress } from "../engine/gameLoop.js";
+import { saveGame, loadGame, wipeSave } from "../engine/saveSystem.js";
+import { BaseGrid } from "./base/grid.js";
+import { Wallet } from "./economy/wallet.js";
+import { PlayerProfile } from "./player/profile.js";
+import { UnitFactory } from "./units/factory.js";
+import { CombatSimulator } from "./combat/simulator.js";
+import { HudManager } from "../ui/hudManager.js";
+import { initBaseEditor } from "../ui/editor.js";
+
+window.addEventListener("DOMContentLoaded", () => {
+  const saved = loadGame();
+  const wallet = new Wallet(saved.wallet.balances);
+  const profile = new PlayerProfile(saved.profile);
+  const grid = new BaseGrid({ wallet, profile, matrix: saved.grid.matrix });
+  const unitFactory = new UnitFactory({
+    wallet,
+    activeFleet: saved.fleet.count,
+  });
+  const gameState = { wallet, profile, grid, unitFactory };
+  const offlineProgress = calculateOfflineProgress(
+    grid,
+    saved.lastSavedTimestamp,
+  );
+  if (offlineProgress.aether > 0) wallet.add("aether", offlineProgress.aether);
+  let hud;
+  let baseEditor;
+
+  const persist = () => saveGame(gameState);
+  const gameLoop = new GameLoop({ wallet, grid, onAutoSave: persist });
+  const combat = new CombatSimulator({
+    wallet,
+    unitFactory,
+    onChange: (message) => {
+      hud.setLog(message);
+      persist();
+      gameLoop.notify("combat");
+    },
+  });
+
+  hud = new HudManager({
+    wallet,
+    profile,
+    grid,
+    unitFactory,
+    combat,
+    onBuildRefinery: () => {
+      const slot = grid.findNextEmptySlot();
+      const result = slot
+        ? grid.placeBuilding(slot.x, slot.y, "refinery")
+        : { ok: false, message: "Base grid is full." };
+      hud.setLog(result.message);
+      gameLoop.notify("build");
+    },
+    onTrainAirship: () => {
+      const result = unitFactory.trainAirship();
+      hud.setLog(result.message);
+      gameLoop.notify("train");
+    },
+    onRaidClouds: () => {
+      const result = combat.raidClouds();
+      hud.setLog(result.message);
+      gameLoop.notify("raid");
+    },
+    onUpgradeBuilding: (x, y) => {
+      const result = grid.upgradeBuilding(x, y);
+      hud.setLog(result.message);
+      gameLoop.notify("upgrade");
+    },
+    onWipeSave: () => {
+      wipeSave();
+      wallet.set("aether", 0);
+      wallet.set("chronium", 0);
+      profile.level = 1;
+      profile.xp = 0;
+      grid.matrix = grid.normalizeMatrix(null);
+      unitFactory.activeFleet = [];
+      unitFactory.queue = [];
+      hud.setLog("Save wiped. Fresh base ready.");
+      gameLoop.notify("wipe");
+    },
+  });
+
+  baseEditor = initBaseEditor({
+    grid,
+    gridNode: document.getElementById("base-grid"),
+    toggleButton: document.getElementById("edit-base-toggle-btn"),
+    renderBase: () => hud.render(),
+    setLog: (message) => hud.setLog(message),
+    onMove: () => persist(),
+    onEditModeChange: (editing) => {
+      if (editing) hud.closeModal();
+    },
+  });
+
+  grid.setChangeHandler(() => persist());
+  unitFactory.setChangeHandler(() => persist());
+  gameLoop.subscribe((snapshot) => {
+    if (snapshot.reason === "tick") unitFactory.tick();
+  });
+  gameLoop.subscribe(() => {
+    hud.render();
+    baseEditor.refreshSelection();
+  });
+
+  hud.render();
+  if (offlineProgress.offlineSeconds > 60 && offlineProgress.aether > 0) {
+    hud.showOfflineProgress(offlineProgress.aether);
+  }
+  persist();
+  gameLoop.start();
+});
