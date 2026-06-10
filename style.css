@@ -760,3 +760,195 @@ body {
     0 0 0.6rem rgba(255, 216, 77, 0.45);
   background: linear-gradient(180deg, rgba(255, 216, 77, 0.28), #20314f);
 }
+
+/* Tab Switching System */
+.game-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  justify-content: space-around;
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-title);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.6rem 0.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+  color: #fff;
+  background: var(--accent-dark, #07364a);
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.visible {
+  display: block;
+  animation: fadeIn 0.35s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Developer Passport Portfolio Styling */
+.portfolio-card {
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(89, 212, 255, 0.25);
+  background: rgba(12, 17, 29, 0.75);
+}
+
+.passport-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.passport-seal {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 0 8px var(--accent-glow));
+}
+
+.passport-meta {
+  flex-grow: 1;
+}
+
+.passport-meta h2 {
+  font-family: var(--font-title);
+  font-size: 1.15rem;
+  letter-spacing: 1.5px;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+
+.passport-meta p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.readiness-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.readiness-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.readiness-score {
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  color: var(--success);
+  text-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+  font-weight: 900;
+}
+
+.portfolio-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.metric-item {
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-radius: 10px;
+  background: rgba(9, 14, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.metric-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.metric-title {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+}
+
+.metric-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.skills-section h3 {
+  font-family: var(--font-title);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+}
+
+.skill-bar-wrap {
+  margin-bottom: 0.75rem;
+}
+
+.skill-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}
+
+.skill-progress {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.skill-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--success));
+  border-radius: 99px;
+  width: 0%;
+  transition: width 0.6s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+.passport-actions .btn {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+}
+

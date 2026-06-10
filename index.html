@@ -2,165 +2,287 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Orchard - Sovereign merit-based farming simulator" />
-    <title>Orchard — Sovereign Farming Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="description" content="Orchard - Sovereign merit-based farming simulator & Citadel Strategy" />
+    <title>Orchard — Sovereign Simulator OS</title>
     <!-- Premium Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
-    <main class="app-shell">
-      <!-- Authorization Screen (Aporaksha SSO Block) -->
-      <section id="auth-screen" class="overlay" aria-live="polite">
-        <div class="panel glass">
-          <div class="passport-logo">🛡️</div>
-          <h2>SOVEREIGN PASSPORT REQUIRED</h2>
-          <p>Please authenticate via the Aporaksha Gateway to access your persistent farming nodes, unlock premium seeds, and sync your harvest metrics with SkillHex & Mars.</p>
-          <button id="auth-btn" class="btn primary glow-pulse">Authenticate Passport</button>
-        </div>
-      </section>
+    <!-- Authorization Screen (Aporaksha Central SSO Block) -->
+    <section id="auth-screen" class="overlay" aria-live="polite">
+      <div class="panel glass animate-float">
+        <div class="passport-logo">🛡️</div>
+        <h2>SOVEREIGN PASSPORT REQUIRED</h2>
+        <p>Please authenticate via the Aporaksha Gateway to access your persistent farming nodes, unlock premium seeds, and sync your harvest metrics with SkillHex & Mars.</p>
+        <button id="auth-btn" class="btn primary glow-pulse">Authenticate Passport</button>
+      </div>
+    </section>
 
-      <!-- Shop Screen (Item Shop Modal) -->
-      <section id="shop-screen" class="overlay" aria-live="polite">
-        <div class="panel glass shop-panel">
-          <div class="shop-header">
-            <h2>ORCHARD SHOP</h2>
-            <button id="close-shop-btn" class="btn close-btn" aria-label="Close shop">✕</button>
+    <!-- Game Start Screen -->
+    <section id="start-screen" class="overlay visible" aria-live="polite">
+      <div class="panel glass animate-float">
+        <h1>ORCHARD</h1>
+        <p class="subtitle">Sovereign Farming Simulator</p>
+        <p class="desc">Till the soil, sow high-yield seeds, manage your stamina, and harvest crops to earn XP and credits for the ecosystem.</p>
+        <button id="start-btn" class="btn primary glow">Enter Simulation</button>
+      </div>
+    </section>
+
+    <!-- Orchard Shop Screen (Modal Overlay) -->
+    <section id="shop-screen" class="overlay" aria-live="polite">
+      <div class="panel glass shop-panel">
+        <div class="shop-header">
+          <h2>ORCHARD SHOP</h2>
+          <button id="close-shop-btn" class="btn close-btn" aria-label="Close shop">✕</button>
+        </div>
+        <div class="credits-display">YOUR WALLET: <span id="shop-credits">0</span> 🪙</div>
+        <div class="shop-grid">
+          <div class="shop-card" data-item="fertilizer">
+            <span class="item-icon">🧪</span>
+            <span class="item-title">Bio-Fertilizer</span>
+            <span class="item-desc">Reduces growth timers of the next crop by 40%</span>
+            <button class="btn buy-btn" data-item="fertilizer" data-cost="30">30 🪙</button>
           </div>
-          <div class="credits-display">YOUR WALLET: <span id="shop-credits">0</span> 🪙</div>
-          <div class="shop-grid">
-            <div class="shop-card" data-item="fertilizer">
-              <span class="item-icon">🧪</span>
-              <span class="item-title">Bio-Fertilizer</span>
-              <span class="item-desc">Reduces growth timers of the next crop by 40%</span>
-              <button class="btn buy-btn" data-item="fertilizer" data-cost="30">30 🪙</button>
+          <div class="shop-card" data-item="elixir">
+            <span class="item-icon">⚡</span>
+            <span class="item-title">Stamina Elixir</span>
+            <span class="item-desc">Restores 50 Stamina units instantly</span>
+            <button class="btn buy-btn" data-item="elixir" data-cost="20">20 🪙</button>
+          </div>
+          <div class="shop-card" data-item="corn_seed">
+            <span class="item-icon">🌾</span>
+            <span class="item-title">Corn Seed License</span>
+            <span class="item-desc">Unlocks Electric Corn planting rights permanently</span>
+            <button class="btn buy-btn" data-item="corn_seed" data-cost="50">50 🪙</button>
+          </div>
+          <div class="shop-card" data-item="berry_seed">
+            <span class="item-icon">🍓</span>
+            <span class="item-title">Berry Seed License</span>
+            <span class="item-desc">Unlocks Mineral Berry planting rights permanently</span>
+            <button class="btn buy-btn" data-item="berry_seed" data-cost="120">120 🪙</button>
+          </div>
+        </div>
+        <div class="inventory-display">
+          <h3>INVENTORY</h3>
+          <p>Fertilizers: <span id="inv-fertilizer">0</span> | Stamina Potions: <span id="inv-elixir">0</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main App Structure -->
+    <main class="app-shell" aria-label="Sovereign Multi-App Shell">
+      
+      <!-- NAVIGATION TABS -->
+      <nav class="game-tabs glass" aria-label="App switcher tabs">
+        <button class="tab-btn active" id="tab-orchard-btn">🌾 Orchard Sim</button>
+        <button class="tab-btn" id="tab-citadel-btn">🏭 Citadel strategy</button>
+        <button class="tab-btn" id="tab-passport-btn">🛡️ Passport Portfolio</button>
+      </nav>
+
+      <!-- 🌾 ORCHARD SIMULATOR SECTION -->
+      <section id="section-orchard" class="tab-content visible">
+        <!-- Orchard HUD -->
+        <header class="hud glass" aria-label="Simulation HUD" style="padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 0.5rem;">
+          <div class="hud-left">
+            <div class="hud-item profile-pill" id="passport-card">
+              <span class="status-indicator"></span>
+              <span id="passport-uid" class="uid">Offline Mode</span>
             </div>
-            <div class="shop-card" data-item="elixir">
-              <span class="item-icon">⚡</span>
-              <span class="item-title">Stamina Elixir</span>
-              <span class="item-desc">Restores 50 Stamina units instantly</span>
-              <button class="btn buy-btn" data-item="elixir" data-cost="20">20 🪙</button>
+            <div class="hud-item stamina-pill">
+              🔋 Stamina: <span id="stamina">100</span>/100
             </div>
-            <div class="shop-card" data-item="corn_seed">
-              <span class="item-icon">🌾</span>
-              <span class="item-title">Corn Seed License</span>
-              <span class="item-desc">Unlocks Electric Corn planting rights permanently</span>
-              <button class="btn buy-btn" data-item="corn_seed" data-cost="50">50 🪙</button>
+            <div class="hud-item timer-pill">
+              ⏰ Time: <span id="timer-val">90</span>s
             </div>
-            <div class="shop-card" data-item="berry_seed">
-              <span class="item-icon">🍓</span>
-              <span class="item-title">Berry Seed License</span>
-              <span class="item-desc">Unlocks Mineral Berry planting rights permanently</span>
-              <button class="btn buy-btn" data-item="berry_seed" data-cost="120">120 🪙</button>
+            <div class="hud-item weather-pill">
+              🌤️ Weather: <span id="weather-val">Sunny</span>
             </div>
           </div>
-          <div class="inventory-display">
-            <h3>INVENTORY</h3>
-            <p>Fertilizers: <span id="inv-fertilizer">0</span> | Stamina Potions: <span id="inv-elixir">0</span></p>
+
+          <div class="hud-right">
+            <div class="hud-item score-pill">Score: <span id="score">0</span></div>
+            <div class="hud-item best-pill">Best: <span id="best-score">0</span></div>
+            <div class="hud-item crop-selector">
+              🌱 Seed: 
+              <select id="seed-select" aria-label="Select seed to plant">
+                <option value="wheat">🌾 Wheat (Tier 1)</option>
+                <option value="corn" disabled>⚡ Electric Corn (Req. Logic Lv 3)</option>
+                <option value="berry" disabled>🍓 Mineral Berry (Req. Strategy Lv 5)</option>
+              </select>
+            </div>
+            <div class="hud-actions" style="margin-top: 0.25rem;">
+              <button id="use-fertilizer-btn" class="btn" title="Apply fertilizer (0 available)">🧪 Use Fertilizer</button>
+              <button id="shop-btn" class="btn">🛒 Shop</button>
+              <button id="pause-btn" class="btn">Pause</button>
+              <button id="restart-btn" class="btn">Restart</button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Canvas Container -->
+        <div class="canvas-wrap">
+          <canvas id="game-canvas" width="800" height="500" aria-label="Game canvas"></canvas>
+        </div>
+
+        <!-- Commons Gifting Panel -->
+        <section class="commons-panel glass" aria-label="Orchard Commons" style="margin-top: 0.75rem;">
+          <div class="dock-header">
+            <span class="dock-line"></span>
+            <h3>ORCHARD COMMONS</h3>
+            <span class="dock-line"></span>
+          </div>
+          <div class="commons-inputs">
+            <div class="circle-input-wrap">
+              <input type="text" id="circle-input" placeholder="Join Circle ID/Name" class="commons-input" />
+              <button id="join-circle-btn" class="btn">Join Circle</button>
+              <span id="circle-status" class="commons-status">No circle joined</span>
+            </div>
+            <div class="gift-input-wrap">
+              <input type="text" id="recipient-input" placeholder="Recipient UID" class="commons-input" />
+              <select id="gift-type" class="gift-select">
+                <option value="wheat">🌾 Wheat Seeds</option>
+                <option value="corn">⚡ Corn Seeds</option>
+                <option value="berry">🍓 Berry Seeds</option>
+              </select>
+              <button id="gift-btn" class="btn primary">Gift Seeds</button>
+              <span id="gift-status" class="commons-status"></span>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- 🏭 CITADEL STRATEGY SECTION -->
+      <section id="section-citadel" class="tab-content">
+        <!-- Resource HUD -->
+        <header class="top-bar" aria-label="Resource HUD">
+          <div class="hud-card">⭐ <span id="player-level">Lv.1</span></div>
+          <div class="hud-card">💰 Aether: <span id="aether-balance">0</span></div>
+          <div class="hud-card">💎 Chronium: <span id="chronium-balance">0</span></div>
+          <div class="hud-card">Fleet: <span id="fleet-count">🛩️ 0</span></div>
+        </header>
+
+        <!-- Command Panel -->
+        <section class="command-panel" aria-label="Base commands">
+          <button id="build-refinery-btn" class="btn primary" type="button">Build Refinery (50 Aether)</button>
+          <button id="train-airship-btn" class="btn" type="button">Train Airship (100 Aether)</button>
+          <button id="raid-clouds-btn" class="btn danger" type="button">Raid Clouds ☁️</button>
+          <button id="edit-base-toggle-btn" class="btn ghost" type="button" aria-pressed="false">Edit Base: OFF</button>
+        </section>
+
+        <!-- Status logs -->
+        <section class="status-panel" aria-live="polite">
+          <p id="production-queue">Production queue: idle</p>
+          <p id="combat-log">Generate Aether, build 🏭, train 🛩️, then raid the ☁️.</p>
+        </section>
+
+        <!-- Grid -->
+        <section class="grid-shell" aria-label="Base grid">
+          <div id="base-grid" class="base-grid" role="grid" aria-label="10 by 10 base build grid"></div>
+        </section>
+
+        <!-- Upgrade Modal -->
+        <section id="building-modal" class="building-modal" aria-label="Building upgrade panel" aria-live="polite" hidden>
+          <div class="modal-card">
+            <h2 id="modal-building-name">Building</h2>
+            <p id="modal-building-level">Level 1</p>
+            <p id="modal-building-production">Production: 0 → 0 Aether/tick</p>
+            <div class="modal-actions">
+              <button id="upgrade-building-btn" class="btn primary" type="button">Upgrade</button>
+              <button id="close-building-modal-btn" class="btn ghost" type="button">Close</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Offline progress -->
+        <section id="offline-modal" class="building-modal offline-modal" aria-label="Offline progress summary" aria-live="polite" hidden>
+          <div class="modal-card">
+            <h2>Welcome Back!</h2>
+            <p id="offline-modal-message">Welcome Back! Your Citadel generated 0 Aether while you were away.</p>
+            <div class="modal-actions">
+              <button id="close-offline-modal-btn" class="btn primary" type="button">Awesome!</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Debug / Save Wipe -->
+        <section class="debug-panel" aria-label="Debug controls" style="margin-top: 0.5rem; justify-content: center;">
+          <button id="wipe-save-btn" class="btn ghost" type="button">Wipe Save</button>
+        </section>
+      </section>
+
+      <!-- 🛡️ DEVELOPER PASSPORT PORTFOLIO SECTION -->
+      <section id="section-passport" class="tab-content">
+        <div class="panel glass portfolio-card">
+          <div class="passport-header">
+            <div class="passport-seal">🛡️</div>
+            <div class="passport-meta">
+              <h2>DEVELOPER PASSPORT</h2>
+              <p>Sovereign Professional Credentials</p>
+            </div>
+            <div class="readiness-badge">
+              <span class="readiness-label">READINESS</span>
+              <span id="port-readiness-val" class="readiness-score">0%</span>
+            </div>
+          </div>
+
+          <div class="portfolio-metrics-grid">
+            <div class="metric-item glass">
+              <span class="metric-icon">🔥</span>
+              <span class="metric-title">Daily Streak</span>
+              <span id="port-streak" class="metric-val">0 Days</span>
+            </div>
+            <div class="metric-item glass">
+              <span class="metric-icon">📈</span>
+              <span class="metric-title">Task Quality</span>
+              <span id="port-quality" class="metric-val">0%</span>
+            </div>
+            <div class="metric-item glass">
+              <span class="metric-icon">🌾</span>
+              <span class="metric-title">Harvest Count</span>
+              <span id="port-harvests" class="metric-val">0</span>
+            </div>
+            <div class="metric-item glass">
+              <span class="metric-icon">🥀</span>
+              <span class="metric-title">Crops Decayed</span>
+              <span id="port-decays" class="metric-val">0</span>
+            </div>
+          </div>
+
+          <div class="skills-section">
+            <h3>Capability Vectors</h3>
+            <div class="skill-bar-wrap">
+              <div class="skill-info">
+                <span>🧬 Logic Aptitude</span>
+                <span id="port-skill-logic">Level 1</span>
+              </div>
+              <div class="skill-progress"><div class="skill-fill" id="port-fill-logic" style="width: 10%;"></div></div>
+            </div>
+            <div class="skill-bar-wrap">
+              <div class="skill-info">
+                <span>🎯 Strategic Thinking</span>
+                <span id="port-skill-strategy">Level 1</span>
+              </div>
+              <div class="skill-progress"><div class="skill-fill" id="port-fill-strategy" style="width: 10%;"></div></div>
+            </div>
+            <div class="skill-bar-wrap">
+              <div class="skill-info">
+                <span>⚙️ Execution Capability</span>
+                <span id="port-skill-execution">Level 1</span>
+              </div>
+              <div class="skill-progress"><div class="skill-fill" id="port-fill-execution" style="width: 10%;"></div></div>
+            </div>
+          </div>
+
+          <div class="passport-actions" style="margin-top: 1.5rem; display: flex; gap: 0.75rem; justify-content: center;">
+            <button id="export-credential-btn" class="btn primary glow">Export JSON Credential</button>
+            <button id="copy-share-btn" class="btn">Copy Shareable Link</button>
           </div>
         </div>
       </section>
 
-      <!-- Game Start Screen -->
-      <section id="start-screen" class="overlay visible" aria-live="polite">
-        <div class="panel glass">
-          <h1>ORCHARD</h1>
-          <p class="subtitle">Sovereign Farming Simulator</p>
-          <p class="desc">Till the soil, sow high-yield seeds, manage your stamina, and harvest crops to earn XP and credits for the ecosystem.</p>
-          <button id="start-btn" class="btn primary glow">Enter Simulation</button>
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
-    <meta
-      name="description"
-      content="Zayvora MVP - mobile base-building strategy loop"
-    />
-    <title>Zayvora MVP</title>
-    <link rel="stylesheet" href="./style.css" />
-  </head>
-  <body>
-    <main class="app-shell" aria-label="Zayvora playable MVP">
-      <section class="top-bar" aria-label="Resource HUD">
-        <div class="hud-card">⭐ <span id="player-level">Lv.1</span></div>
-        <div class="hud-card">
-          💰 Aether: <span id="aether-balance">0</span>
-        </div>
-        <div class="hud-card">💎 <span id="chronium-balance">0</span></div>
-        <div class="hud-card">Fleet: <span id="fleet-count">🛩️ 0</span></div>
-      </section>
-
-      <!-- HUD Dashboard -->
-      <section class="hud" aria-label="Simulation HUD">
-        <div class="hud-left">
-          <div class="hud-item profile-pill" id="passport-card">
-            <span class="status-indicator"></span>
-            <span id="passport-uid" class="uid">Offline Mode</span>
-          </div>
-          <div class="hud-item stamina-pill">
-            🔋 Stamina: <span id="stamina">100</span>/100
-          </div>
-          <div class="hud-item timer-pill">
-            ⏰ Time: <span id="timer-val">90</span>s
-          </div>
-          <div class="hud-item weather-pill">
-            🌤️ Weather: <span id="weather-val">Sunny</span>
-          </div>
-        </div>
-
-        <div class="hud-right">
-          <div class="hud-item score-pill">Score: <span id="score">0</span></div>
-          <div class="hud-item best-pill">Best: <span id="best-score">0</span></div>
-          <div class="hud-item crop-selector">
-            🌱 Seed: 
-            <select id="seed-select" aria-label="Select seed to plant">
-              <option value="wheat">🌾 Wheat (Tier 1)</option>
-              <option value="corn" disabled>⚡ Electric Corn (Req. Logic Lv 3)</option>
-              <option value="berry" disabled>🍓 Mineral Berry (Req. Strategy Lv 5)</option>
-            </select>
-          </div>
-          <div class="hud-actions">
-            <button id="use-fertilizer-btn" class="btn" title="Apply fertilizer (0 available)">🧪 Use Fertilizer</button>
-            <button id="shop-btn" class="btn">🛒 Shop</button>
-            <button id="pause-btn" class="btn">Pause</button>
-            <button id="restart-btn" class="btn">Restart</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Interactive Canvas -->
-      <section class="canvas-wrap">
-        <canvas id="game-canvas" width="800" height="500" aria-label="Game canvas"></canvas>
-      </section>
-
-      <!-- Orchard Commons Panel -->
-      <section class="commons-panel glass" aria-label="Orchard Commons">
-        <div class="dock-header">
-          <span class="dock-line"></span>
-          <h3>ORCHARD COMMONS</h3>
-          <span class="dock-line"></span>
-        </div>
-        <div class="commons-inputs">
-          <div class="circle-input-wrap">
-            <input type="text" id="circle-input" placeholder="Join Circle ID/Name" class="commons-input" />
-            <button id="join-circle-btn" class="btn">Join Circle</button>
-            <span id="circle-status" class="commons-status">No circle joined</span>
-          </div>
-          <div class="gift-input-wrap">
-            <input type="text" id="recipient-input" placeholder="Recipient UID" class="commons-input" />
-            <select id="gift-type" class="gift-select">
-              <option value="wheat">🌾 Wheat Seeds</option>
-              <option value="corn">⚡ Corn Seeds</option>
-              <option value="berry">🍓 Berry Seeds</option>
-            </select>
-            <button id="gift-btn" class="btn primary">Gift Seeds</button>
-            <span id="gift-status" class="commons-status"></span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Portals Dock -->
+      <!-- Portals Dock (Shared bottom) -->
       <section class="portals-dock" aria-label="Ecosystem Portals">
         <div class="dock-header">
           <span class="dock-line"></span>
@@ -168,120 +290,67 @@
           <span class="dock-line"></span>
         </div>
         <div class="portals-grid">
-          <button class="btn portal-btn" id="portal-skillhex" title="Load your SkillHex capability graph">
-            🧬 SkillHex Graph
-          </button>
-          <button class="btn portal-btn" id="portal-mars" title="Transport crops to Mars colony">
-            🚀 Mars Colony
-          </button>
-          <button class="btn portal-btn" id="portal-orchade" title="Load Orchard strategy dashboard">
-            🌾 Orchard Strategy
-          </button>
-          <button class="btn logout-btn" id="logout-btn" title="Sign out of Sovereign Passport">
-            Logout
-          </button>
+          <button class="btn portal-btn" id="portal-skillhex" title="Load your SkillHex capability graph">🧬 SkillHex Graph</button>
+          <button class="btn portal-btn" id="portal-mars" title="Transport crops to Mars colony">🚀 Mars Colony</button>
+          <button class="btn portal-btn" id="portal-orchade" title="Load Orchard strategy dashboard">🌾 Orchard Strategy</button>
+          <button class="btn logout-btn" id="logout-btn" title="Sign out of Sovereign Passport">Logout</button>
         </div>
       </section>
 
-      <!-- Game Over Screen -->
+      <!-- Orchard Game Over Screen -->
       <section id="end-screen" class="overlay" aria-live="polite">
         <div class="panel glass">
           <h2>SIMULATION COMPLETE</h2>
           <p>Your session output: <span id="final-score" class="highlight-score">0</span></p>
           <p id="sso-sync-status" class="sync-status">🔄 Syncing ledger with Aporaksha...</p>
           <button id="play-again-btn" class="btn primary glow">Re-Initialize</button>
-      <section class="command-panel" aria-label="Base commands">
-        <button id="build-refinery-btn" class="btn primary" type="button">
-          Build Refinery (50 Aether)
-        </button>
-        <button id="train-airship-btn" class="btn" type="button">
-          Train Airship (100 Aether)
-        </button>
-        <button id="raid-clouds-btn" class="btn danger" type="button">
-          Raid Clouds ☁️
-        </button>
-        <button
-          id="edit-base-toggle-btn"
-          class="btn ghost"
-          type="button"
-          aria-pressed="false"
-        >
-          Edit Base: OFF
-        </button>
-      </section>
-
-      <section class="status-panel" aria-live="polite">
-        <p id="production-queue">Production queue: idle</p>
-        <p id="combat-log">
-          Generate Aether, build 🏭, train 🛩️, then raid the ☁️.
-        </p>
-      </section>
-
-      <section class="grid-shell" aria-label="Base grid">
-        <div
-          id="base-grid"
-          class="base-grid"
-          role="grid"
-          aria-label="10 by 10 base build grid"
-        ></div>
-      </section>
-
-      <section
-        id="building-modal"
-        class="building-modal"
-        aria-label="Building upgrade panel"
-        aria-live="polite"
-        hidden
-      >
-        <div class="modal-card">
-          <h2 id="modal-building-name">Building</h2>
-          <p id="modal-building-level">Level 1</p>
-          <p id="modal-building-production">Production: 0 → 0 Aether/tick</p>
-          <div class="modal-actions">
-            <button id="upgrade-building-btn" class="btn primary" type="button">
-              Upgrade
-            </button>
-            <button
-              id="close-building-modal-btn"
-              class="btn ghost"
-              type="button"
-            >
-              Close
-            </button>
-          </div>
         </div>
-      </section>
-
-      <section
-        id="offline-modal"
-        class="building-modal offline-modal"
-        aria-label="Offline progress summary"
-        aria-live="polite"
-        hidden
-      >
-        <div class="modal-card">
-          <h2>Welcome Back!</h2>
-          <p id="offline-modal-message">
-            Welcome Back! Your Citadel generated 0 Aether while you were away.
-          </p>
-          <div class="modal-actions">
-            <button
-              id="close-offline-modal-btn"
-              class="btn primary"
-              type="button"
-            >
-              Awesome!
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="debug-panel" aria-label="Debug controls">
-        <button id="wipe-save-btn" class="btn ghost" type="button">
-          Wipe Save
-        </button>
       </section>
     </main>
+
+    <!-- Tab Switcher Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const tabs = {
+          orchard: {
+            btn: document.getElementById('tab-orchard-btn'),
+            sec: document.getElementById('section-orchard')
+          },
+          citadel: {
+            btn: document.getElementById('tab-citadel-btn'),
+            sec: document.getElementById('section-citadel')
+          },
+          passport: {
+            btn: document.getElementById('tab-passport-btn'),
+            sec: document.getElementById('section-passport')
+          }
+        };
+
+        function switchTab(activeKey) {
+          Object.keys(tabs).forEach((key) => {
+            const tab = tabs[key];
+            if (key === activeKey) {
+              tab.btn.classList.add('active');
+              tab.sec.classList.add('visible');
+              tab.sec.style.display = 'block';
+            } else {
+              tab.btn.classList.remove('active');
+              tab.sec.classList.remove('visible');
+              tab.sec.style.display = 'none';
+            }
+          });
+          // Dispatch custom event for sub-systems
+          window.dispatchEvent(new CustomEvent('app:tab_changed', { detail: { tab: activeKey } }));
+        }
+
+        Object.keys(tabs).forEach((key) => {
+          tabs[key].btn.addEventListener('click', () => switchTab(key));
+        });
+
+        // Initialize default view
+        switchTab('orchard');
+      });
+    </script>
 
     <!-- Core Game Scripts -->
     <script type="module" src="./game.js"></script>

@@ -73,12 +73,29 @@ export default class MainScene extends Scene {
       }
     }
 
+    // Apply hardware-accelerated CSS filters on canvas wrapper for dynamic shaders
+    const canvasWrap = document.querySelector('.canvas-wrap');
+    if (canvasWrap) {
+      if (this.activeWeather === 'Acid Rain') {
+        canvasWrap.style.filter = 'hue-rotate(60deg) saturate(1.4) contrast(1.1) brightness(0.9)';
+      } else if (this.activeWeather === 'Solar Flare') {
+        canvasWrap.style.filter = 'saturate(1.7) contrast(1.2) sepia(0.2) drop-shadow(0 0 16px rgba(255, 23, 68, 0.4))';
+      } else {
+        canvasWrap.style.filter = 'none';
+      }
+    }
+
     this.onScore?.(this.score);
     this.updateTimerHUD();
   }
 
   deactivate() {
     this._active = false;
+    // Reset shaders
+    const canvasWrap = document.querySelector('.canvas-wrap');
+    if (canvasWrap) {
+      canvasWrap.style.filter = 'none';
+    }
   }
 
   addFloatingText(text, x, y, color) {
@@ -135,10 +152,10 @@ export default class MainScene extends Scene {
     // Draw dynamic weather overlays
     if (this.activeWeather === 'Acid Rain') {
       ctx.save();
-      ctx.strokeStyle = 'rgba(0, 229, 255, 0.18)';
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.22)';
       ctx.lineWidth = 1;
       // Draw falling streaks centered around camera target coordinates
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 40; i++) {
         const rx = cx - canvasWidth/2 + (Math.random() * canvasWidth);
         const ry = cy - canvasHeight/2 + (Math.random() * canvasHeight);
         ctx.beginPath();
@@ -151,7 +168,7 @@ export default class MainScene extends Scene {
     else if (this.activeWeather === 'Solar Flare') {
       ctx.save();
       // Pulsing thermal glow filter
-      const pulse = 0.05 + Math.sin(performance.now() / 400) * 0.02;
+      const pulse = 0.06 + Math.sin(performance.now() / 400) * 0.025;
       ctx.fillStyle = `rgba(255, 23, 68, ${pulse})`;
       ctx.fillRect(cx - canvasWidth/2, cy - canvasHeight/2, canvasWidth, canvasHeight);
       ctx.restore();

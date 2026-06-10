@@ -7,6 +7,8 @@ import { viaAuth } from '../core/via-auth-sdk.js';
 import { Interconnection } from './src/components/interconnection.js';
 import { FarmingInteractor } from './src/components/farming.js';
 import { Commons } from './src/components/commons.js';
+import { Portfolio } from './src/components/portfolio.js';
+import { AudioEngine } from './src/components/audio.js';
 
 const canvas = document.getElementById('game-canvas');
 if (!canvas) throw new Error('Canvas element missing');
@@ -110,6 +112,9 @@ async function startGame() {
   menu.setPauseLabel(false);
   menu.setPauseEnabled(true);
   engine.resume();
+
+  // Start space drone ambient music (Web Audio API)
+  AudioEngine.toggleAmbient(true);
 }
 
 async function restartGame() {
@@ -126,6 +131,54 @@ function togglePause() {
     engine.resume();
   }
   menu.setPauseLabel(runtime.paused);
+}
+
+// Render the developer passport professional portfolio panel
+function renderPortfolio() {
+  const uid = viaAuth.getEcosystemUid() || 'guest';
+  const logicLevel = Interconnection.getPlayerSkillLevel('logic');
+  const strategyLevel = Interconnection.getPlayerSkillLevel('strategy');
+  const executionLevel = Interconnection.getPlayerSkillLevel('execution');
+  
+  const totalSkillsSum = logicLevel + strategyLevel;
+  const metrics = Portfolio.calculateMetrics(uid, totalSkillsSum);
+  
+  const scoreValEl = document.getElementById('port-readiness-val');
+  if (scoreValEl) scoreValEl.textContent = `${metrics.readinessScore}%`;
+  
+  const streakEl = document.getElementById('port-streak');
+  if (streakEl) streakEl.textContent = `${metrics.streak} Days`;
+  
+  const qualityEl = document.getElementById('port-quality');
+  if (qualityEl) qualityEl.textContent = `${metrics.taskQuality}%`;
+  
+  const harvestsEl = document.getElementById('port-harvests');
+  if (harvestsEl) harvestsEl.textContent = String(metrics.harvests);
+  
+  const decaysEl = document.getElementById('port-decays');
+  if (decaysEl) decaysEl.textContent = String(metrics.decays);
+
+  // Skill progression fills
+  const skillLogicText = document.getElementById('port-skill-logic');
+  const fillLogic = document.getElementById('port-fill-logic');
+  if (skillLogicText && fillLogic) {
+    skillLogicText.textContent = `Level ${logicLevel}`;
+    fillLogic.style.width = `${Math.min(100, logicLevel * 10)}%`;
+  }
+
+  const skillStratText = document.getElementById('port-skill-strategy');
+  const fillStrat = document.getElementById('port-fill-strategy');
+  if (skillStratText && fillStrat) {
+    skillStratText.textContent = `Level ${strategyLevel}`;
+    fillStrat.style.width = `${Math.min(100, strategyLevel * 10)}%`;
+  }
+
+  const skillExecText = document.getElementById('port-skill-execution');
+  const fillExec = document.getElementById('port-fill-execution');
+  if (skillExecText && fillExec) {
+    skillExecText.textContent = `Level ${executionLevel}`;
+    fillExec.style.width = `${Math.min(100, executionLevel * 10)}%`;
+  }
 }
 
 // Check SSO login state and update layout
@@ -173,6 +226,10 @@ async function checkAuth() {
       hydrateSeedSelect();
     }
 
+    // Dynamic streak updates
+    Portfolio.updateStreak(uid);
+    renderPortfolio();
+    
     updateInventoryHUD();
     return true;
   } else {
@@ -275,6 +332,8 @@ function setupUiListeners() {
       runtime.credits -= cost;
       const uid = viaAuth.getEcosystemUid() || 'guest';
       localStorage.setItem(`via_user_${uid}_credits`, String(runtime.credits));
+      
+      AudioEngine.playBuy(); // Web Audio buy effect
 
       if (item === 'fertilizer') {
         runtime.inventory.fertilizer = (runtime.inventory.fertilizer || 0) + 1;
@@ -360,6 +419,49 @@ function setupUiListeners() {
     }
     setTimeout(() => { giftStatus.textContent = ''; }, 4000);
   });
+
+  // Export Credential listener
+  document.getElementById('export-credential-btn').addEventListener('click', () => {
+    const uid = viaAuth.getEcosystemUid() || 'guest';
+    const logicLevel = Interconnection.getPlayerSkillLevel('logic');
+    const strategyLevel = Interconnection.getPlayerSkillLevel('strategy');
+    const executionLevel = Interconnection.getPlayerSkillLevel('execution');
+    
+    const cred = Portfolio.exportCredential(uid, {
+      logic: logicLevel,
+      strategy: strategyLevel,
+      execution: executionLevel
+    });
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cred, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", `aporaksha-merit-${uid}.json`);
+    dlAnchor.click();
+  });
+
+  // Copy share link listener
+  document.getElementById('copy-share-btn').addEventListener('click', () => {
+    const uid = viaAuth.getEcosystemUid() || 'guest';
+    const url = `${window.location.origin}${window.location.pathname}?portfolio=${uid}`;
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Portfolio shareable link copied to clipboard!');
+    }).catch(() => {
+      alert(`Share Link: ${url}`);
+    });
+  });
+
+  // Redirection / tabs listener to trigger rendering of portfolio
+  window.addEventListener('app:tab_changed', (e) => {
+    if (e.detail && e.detail.tab === 'passport') {
+      renderPortfolio();
+    }
+  });
+
+  // Telemetry updates listeners
+  window.addEventListener('portfolio:updated', () => {
+    renderPortfolio();
+  });
 }
 
 async function boot() {
@@ -377,8 +479,18 @@ async function boot() {
   if (authed) {
     menu.showStart();
     hydrateSeedSelect();
+    renderPortfolio();
   }
   
+  // Real-time nodes listeners hook
+  Interconnection.initRealtimeListeners((nodeName, skillType) => {
+    if (scene.player) {
+      scene.addFloatingText(`Capability Unlocked: ${nodeName}!`, scene.player.x, scene.player.y, '#00e676');
+    }
+    hydrateSeedSelect();
+    renderPortfolio();
+  });
+
   menu.setPauseEnabled(false);
   renderScore();
   engine.debug.enable();

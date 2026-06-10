@@ -1,6 +1,8 @@
 import { Component } from '../../engine/core/component.js';
 import { TILE_SIZE, TILE_TYPES, WorldRenderer } from '../entities/world.js';
 import { Interconnection } from './interconnection.js';
+import { AudioEngine } from './audio.js';
+import { Portfolio } from './portfolio.js';
 
 export class FarmingInteractor extends Component {
   constructor(options = {}) {
@@ -71,6 +73,7 @@ export class FarmingInteractor extends Component {
 
     // Read active weather from scene
     const weather = this.entity.scene.activeWeather || 'Sunny';
+    const uid = localStorage.getItem('ecosystem_uid') || 'guest';
 
     if (currentTile === TILE_TYPES.GRASS || currentTile === TILE_TYPES.DIRT) {
       // TILL SOIL
@@ -80,6 +83,7 @@ export class FarmingInteractor extends Component {
       if (this.consumeStamina(tillCost)) {
         worldRenderer.setTile(tileX, tileY, TILE_TYPES.TILLED);
         this.triggerVibration(100);
+        AudioEngine.playTill(); // Web Audio Till FX
         if (weather === 'Acid Rain') {
           this.showFloatMessage('Tilled (Heavy Mud!)', px, py, '#ffa726');
         }
@@ -109,6 +113,12 @@ export class FarmingInteractor extends Component {
           label = '🌾 Wheat';
         }
 
+        // Apply Mars growth modifiers (bidirectional integration bonus)
+        const marsMods = Interconnection.getMarsModifiers();
+        if (marsMods.growthSpeedBonus > 0) {
+          growthDuration = growthDuration * (1 - marsMods.growthSpeedBonus);
+        }
+
         // Apply Weather growth modifier
         if (weather === 'Solar Flare') {
           growthDuration = growthDuration * 0.5; // grows 50% faster
@@ -131,6 +141,7 @@ export class FarmingInteractor extends Component {
         }
 
         worldRenderer.setTile(tileX, tileY, plantType);
+        AudioEngine.playPlant(); // Web Audio Plant FX
         
         if (appliedFertilizer) {
           this.showFloatMessage(`Planted with Fertilizer!`, px, py - 20, '#00e5ff');
@@ -157,6 +168,8 @@ export class FarmingInteractor extends Component {
               const currentGrownTile = worldRenderer.getTile(tileX, tileY);
               if (currentGrownTile === grownType) {
                 worldRenderer.setTile(tileX, tileY, TILE_TYPES.DIRT);
+                AudioEngine.playAlarm(); // Web Audio alarm sound for decay
+                Portfolio.recordDecay(uid); // Record telemetry decay
                 
                 const decayLabel = (weather === 'Solar Flare') ? 'Crop Burnt!' : 'Crop Decayed!';
                 const decayColor = (weather === 'Solar Flare') ? '#ffa726' : '#777777';
@@ -185,6 +198,8 @@ export class FarmingInteractor extends Component {
       // HARVEST CROP
       if (this.consumeStamina(1)) {
         worldRenderer.setTile(tileX, tileY, TILE_TYPES.DIRT);
+        AudioEngine.playHarvest(); // Web Audio Harvest FX
+        Portfolio.recordHarvest(uid); // Record telemetry harvest
         
         let scoreReward = 0;
         let skillXp = 0;
