@@ -9,6 +9,56 @@
  */
 
 export const Portfolio = {
+  _authToken: null,
+
+  setAuthToken(token) {
+    this._authToken = token;
+  },
+
+  async syncToSovereignEngine(uid = 'guest') {
+    if (!this._authToken) return;
+    const metrics = this.calculateMetrics(uid);
+    try {
+      await fetch('http://localhost:3000/api/passport/portfolio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this._authToken}`
+        },
+        body: JSON.stringify({
+          streak_count: metrics.streak,
+          task_success_rate: metrics.taskQuality,
+          readiness_score: metrics.readinessScore
+        })
+      });
+    } catch (e) {
+      console.warn('Portfolio sync failed (offline-first fallback active)', e);
+    }
+  },
+
+  async syncFromSovereignEngine(uid = 'guest') {
+    if (!this._authToken) return;
+    try {
+      const res = await fetch('http://localhost:3000/api/passport/portfolio', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this._authToken}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const stats = this.getStats(uid);
+        if (data.streak_count && data.streak_count > stats.streak) {
+           stats.streak = data.streak_count;
+           this.saveStats(uid, stats);
+           this.dispatchUpdate(uid);
+        }
+      }
+    } catch (e) {
+      console.warn('Portfolio fetch failed (offline-first fallback active)', e);
+    }
+  },
+
   // Load telemetry stats for a user UID
   getStats(uid = 'guest') {
     const key = `via_user_${uid}_telemetry`;
@@ -34,6 +84,7 @@ export const Portfolio = {
   saveStats(uid = 'guest', stats) {
     const key = `via_user_${uid}_telemetry`;
     localStorage.setItem(key, JSON.stringify(stats));
+    this.syncToSovereignEngine(uid);
   },
 
   // Track a successful crop harvest

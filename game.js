@@ -226,12 +226,26 @@ async function checkAuth() {
       hydrateSeedSelect();
     }
 
-    // Dynamic streak updates
-    Portfolio.updateStreak(uid);
-    renderPortfolio();
-    
-    updateInventoryHUD();
-    return true;
+    // PostMessage listener for Cross-Origin Sovereign Auth
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'ZAYVORA_PASSPORT_TOKEN') {
+        const token = event.data.token;
+        const uid = event.data.uid || 'guest';
+        Portfolio.setAuthToken(token);
+        Portfolio.syncFromSovereignEngine(uid).then(() => {
+          renderPortfolio();
+        });
+      }
+    });
+
+    // Init Phase
+    try {
+      Portfolio.updateStreak(uid);
+      renderPortfolio();
+      
+      updateInventoryHUD();
+      return true;
+    } catch (e) { console.error(e); }
   } else {
     passportCard.classList.remove('active');
     passportUid.textContent = 'Offline Mode';
