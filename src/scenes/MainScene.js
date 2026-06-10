@@ -58,12 +58,44 @@ export default class MainScene extends Scene {
       interactor.updateStaminaHUD();
     }
     
+    // Choose dynamic weather
+    const weathers = ['Sunny', 'Acid Rain', 'Solar Flare'];
+    this.activeWeather = weathers[Math.floor(Math.random() * weathers.length)];
+    const weatherEl = document.getElementById('weather-val');
+    if (weatherEl) {
+      weatherEl.textContent = this.activeWeather;
+      if (this.activeWeather === 'Acid Rain') {
+        weatherEl.style.color = '#ffa726';
+      } else if (this.activeWeather === 'Solar Flare') {
+        weatherEl.style.color = '#ff1744';
+      } else {
+        weatherEl.style.color = '#00e676';
+      }
+    }
+
+    // Apply hardware-accelerated CSS filters on canvas wrapper for dynamic shaders
+    const canvasWrap = document.querySelector('.canvas-wrap');
+    if (canvasWrap) {
+      if (this.activeWeather === 'Acid Rain') {
+        canvasWrap.style.filter = 'hue-rotate(60deg) saturate(1.4) contrast(1.1) brightness(0.9)';
+      } else if (this.activeWeather === 'Solar Flare') {
+        canvasWrap.style.filter = 'saturate(1.7) contrast(1.2) sepia(0.2) drop-shadow(0 0 16px rgba(255, 23, 68, 0.4))';
+      } else {
+        canvasWrap.style.filter = 'none';
+      }
+    }
+
     this.onScore?.(this.score);
     this.updateTimerHUD();
   }
 
   deactivate() {
     this._active = false;
+    // Reset shaders
+    const canvasWrap = document.querySelector('.canvas-wrap');
+    if (canvasWrap) {
+      canvasWrap.style.filter = 'none';
+    }
   }
 
   addFloatingText(text, x, y, color) {
@@ -112,6 +144,36 @@ export default class MainScene extends Scene {
   }
 
   render(ctx) {
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+    const cx = this.engine.renderer.camera.x;
+    const cy = this.engine.renderer.camera.y;
+
+    // Draw dynamic weather overlays
+    if (this.activeWeather === 'Acid Rain') {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.22)';
+      ctx.lineWidth = 1;
+      // Draw falling streaks centered around camera target coordinates
+      for (let i = 0; i < 40; i++) {
+        const rx = cx - canvasWidth/2 + (Math.random() * canvasWidth);
+        const ry = cy - canvasHeight/2 + (Math.random() * canvasHeight);
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx - 4, ry + 12);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } 
+    else if (this.activeWeather === 'Solar Flare') {
+      ctx.save();
+      // Pulsing thermal glow filter
+      const pulse = 0.06 + Math.sin(performance.now() / 400) * 0.025;
+      ctx.fillStyle = `rgba(255, 23, 68, ${pulse})`;
+      ctx.fillRect(cx - canvasWidth/2, cy - canvasHeight/2, canvasWidth, canvasHeight);
+      ctx.restore();
+    }
+
     // Draw all floating text on top in world coordinates
     ctx.save();
     ctx.font = "bold 13px 'Orbitron', monospace";
