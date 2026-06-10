@@ -8,10 +8,14 @@ export default class MainScene extends Scene {
     super('main');
     this.onScore = options.onScore ?? null;
     this.onGameOver = options.onGameOver ?? null;
+    
     this.score = 0;
     this._active = false;
     this.player = null;
     this.world = null;
+    
+    this.floatingTexts = [];
+    this.timeLeft = 90; // 90 seconds day timer
   }
 
   init() {
@@ -44,15 +48,81 @@ export default class MainScene extends Scene {
   activate() {
     this._active = true;
     this.score = 0;
+    this.timeLeft = 90;
+    this.floatingTexts = [];
+    
+    // Reset stamina in interactor
+    const interactor = this.player.getComponent(FarmingInteractor);
+    if (interactor) {
+      interactor.stamina = 100;
+      interactor.updateStaminaHUD();
+    }
+    
     this.onScore?.(this.score);
+    this.updateTimerHUD();
   }
 
   deactivate() {
     this._active = false;
   }
 
+  addFloatingText(text, x, y, color) {
+    this.floatingTexts.push({
+      text,
+      x,
+      y,
+      color: color || '#ffffff',
+      alpha: 1,
+      life: 0.8, // 0.8 seconds lifetime
+      velocityY: -45 // rise speed
+    });
+  }
+
+  updateTimerHUD() {
+    const timerEl = document.getElementById('timer-val');
+    if (timerEl) {
+      timerEl.textContent = String(Math.ceil(this.timeLeft));
+    }
+  }
+
   update(dt) {
     if (!this._active) return;
-    // Core game logic loop could handle day/night cycles here
+    
+    // Day loop countdown
+    this.timeLeft -= dt;
+    this.updateTimerHUD();
+
+    if (this.timeLeft <= 0) {
+      this.timeLeft = 0;
+      this.updateTimerHUD();
+      this.onGameOver?.(this.score);
+      return;
+    }
+
+    // Update floating texts
+    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = this.floatingTexts[i];
+      ft.y += ft.velocityY * dt;
+      ft.life -= dt;
+      ft.alpha = Math.max(0, ft.life / 0.8);
+      if (ft.life <= 0) {
+        this.floatingTexts.splice(i, 1);
+      }
+    }
+  }
+
+  render(ctx) {
+    // Draw all floating text on top in world coordinates
+    ctx.save();
+    ctx.font = "bold 13px 'Orbitron', monospace";
+    ctx.textAlign = 'center';
+    
+    for (const ft of this.floatingTexts) {
+      ctx.fillStyle = ft.color;
+      ctx.globalAlpha = ft.alpha;
+      ctx.fillText(ft.text, ft.x, ft.y);
+    }
+    
+    ctx.restore();
   }
 }
