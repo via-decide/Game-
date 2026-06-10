@@ -162,15 +162,31 @@ export const Portfolio = {
     window.dispatchEvent(new CustomEvent('portfolio:updated', { detail: { uid } }));
   },
 
+  // Convert numerical readiness to a BBCH plant growth stage
+  getGrowthStage(readinessScore) {
+    if (readinessScore < 10) return 'Germination';
+    if (readinessScore < 20) return 'Leaf Development';
+    if (readinessScore < 30) return 'Tillering';
+    if (readinessScore < 40) return 'Stem Elongation';
+    if (readinessScore < 50) return 'Booting';
+    if (readinessScore < 60) return 'Heading';
+    if (readinessScore < 70) return 'Flowering';
+    if (readinessScore < 80) return 'Grain Filling';
+    if (readinessScore < 90) return 'Ripening';
+    return 'Senescence';
+  },
+
   // Generate a verified JSON capability credential
   exportCredential(uid = 'guest', skillLevels = {}) {
     const metrics = this.calculateMetrics(uid, (skillLevels.logic || 1) + (skillLevels.strategy || 1));
+    const growthStage = this.getGrowthStage(metrics.readinessScore);
     const credential = {
       issuer: 'Aporaksha Passport Services',
       subject: uid,
       timestamp: Date.now(),
       domain: 'Orchard Sovereign Engineering',
       metrics: {
+        growthStage: growthStage,
         readinessScore: `${metrics.readinessScore}%`,
         taskQuality: `${metrics.taskQuality}%`,
         streakCount: `${metrics.streak} days`,
