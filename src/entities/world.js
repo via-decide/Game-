@@ -7,8 +7,15 @@ export const TILE_TYPES = {
   GRASS: 0,
   DIRT: 1,
   TILLED: 2,
-  PLANTED: 3,
-  GROWN: 4
+  
+  PLANTED_WHEAT: 3,
+  GROWN_WHEAT: 4,
+  
+  PLANTED_CORN: 5,
+  GROWN_CORN: 6,
+  
+  PLANTED_BERRY: 7,
+  GROWN_BERRY: 8
 };
 
 export class WorldRenderer extends Component {
@@ -53,28 +60,92 @@ export class WorldRenderer extends Component {
     ctx.beginPath();
     ctx.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     
+    // Basic backgrounds
     switch(type) {
-      case TILE_TYPES.GRASS: ctx.fillStyle = '#2d4c1e'; break;
-      case TILE_TYPES.DIRT: ctx.fillStyle = '#4a3622'; break;
-      case TILE_TYPES.TILLED: ctx.fillStyle = '#312213'; break;
-      case TILE_TYPES.PLANTED: 
-        ctx.fillStyle = '#312213'; 
+      case TILE_TYPES.GRASS:
+        ctx.fillStyle = '#112211'; 
         ctx.fill();
-        ctx.fillStyle = '#5c9438';
-        ctx.beginPath();
-        ctx.arc(x * TILE_SIZE + TILE_SIZE/2, y * TILE_SIZE + TILE_SIZE/2, 8, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.stroke();
         break;
-      case TILE_TYPES.GROWN:
-        ctx.fillStyle = '#312213'; 
+      case TILE_TYPES.DIRT:
+        ctx.fillStyle = '#221511'; 
         ctx.fill();
-        ctx.fillStyle = '#ffb020'; // Wheat/crop
-        ctx.beginPath();
-        ctx.arc(x * TILE_SIZE + TILE_SIZE/2, y * TILE_SIZE + TILE_SIZE/2, 16, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.stroke();
+        break;
+      default: // Tilled or crops tilled backgrounds
+        ctx.fillStyle = '#160d0a'; 
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,229,255,0.05)';
+        ctx.stroke();
         break;
     }
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-    ctx.stroke();
+    
+    // Render foreground crops
+    const cx = x * TILE_SIZE + TILE_SIZE / 2;
+    const cy = y * TILE_SIZE + TILE_SIZE / 2;
+    
+    ctx.beginPath();
+    switch(type) {
+      case TILE_TYPES.PLANTED_WHEAT:
+        ctx.fillStyle = '#2e7d32';
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case TILE_TYPES.GROWN_WHEAT:
+        // Glowing gold wheat head
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(255, 179, 0, 0.6)';
+        ctx.fillStyle = '#ffb300';
+        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
+        break;
+        
+      case TILE_TYPES.PLANTED_CORN:
+        ctx.fillStyle = '#0277bd';
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case TILE_TYPES.GROWN_CORN:
+        // Electric neon cyan corn
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = 'rgba(0, 229, 255, 0.8)';
+        ctx.fillStyle = '#00e5ff';
+        ctx.arc(cx, cy, 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw center node
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
+        break;
+        
+      case TILE_TYPES.PLANTED_BERRY:
+        ctx.fillStyle = '#ad1457';
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case TILE_TYPES.GROWN_BERRY:
+        // Glowing gold/magenta mineral berry
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = 'rgba(255, 23, 68, 0.7)';
+        ctx.fillStyle = '#ff1744';
+        ctx.arc(cx, cy, 16, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Gold spots
+        ctx.fillStyle = '#ffca28';
+        ctx.beginPath();
+        ctx.arc(cx - 5, cy - 4, 3, 0, Math.PI * 2);
+        ctx.arc(cx + 5, cy + 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
+        break;
+    }
   }
 }
 

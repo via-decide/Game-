@@ -1,5 +1,6 @@
 import { Component } from '../../engine/core/component.js';
 import { TILE_SIZE, TILE_TYPES, WorldRenderer } from '../entities/world.js';
+import { Interconnection } from './interconnection.js';
 
 export class FarmingInteractor extends Component {
   constructor(options = {}) {
@@ -7,13 +8,28 @@ export class FarmingInteractor extends Component {
     this.input = options.input;
     this.worldEntity = options.worldEntity;
     this._lastInteract = 0;
+    
+    this.stamina = 100;
+    this.maxStamina = 100;
+    this._staminaRegenTimer = 0;
+    this._lastRegenTime = performance.now();
   }
 
   update(dt) {
     if (!this.input || !this.worldEntity) return;
+
+    // Regenerate stamina slowly: +4 stamina per second
+    const now = performance.now();
+    const elapsed = (now - this._lastRegenTime) / 1000;
+    this._lastRegenTime = now;
     
-    // Simple cooldown
-    if (performance.now() - this._lastInteract < 300) return;
+    if (this.stamina < this.maxStamina) {
+      this.stamina = Math.min(this.maxStamina, this.stamina + 4 * elapsed);
+      this.updateStaminaHUD();
+    }
+    
+    // Simple interaction cooldown
+    if (performance.now() - this._lastInteract < 250) return;
 
     if (this.input.isDown(' ')) {
       this._lastInteract = performance.now();
@@ -21,11 +37,25 @@ export class FarmingInteractor extends Component {
     }
   }
 
+  updateStaminaHUD() {
+    const staminaEl = document.getElementById('stamina');
+    if (staminaEl) {
+      staminaEl.textContent = String(Math.floor(this.stamina));
+    }
+  }
+
+  consumeStamina(amount) {
+    if (this.stamina < amount) return false;
+    this.stamina -= amount;
+    this.updateStaminaHUD();
+    return true;
+  }
+
   interact() {
     const worldRenderer = this.worldEntity.getComponent(WorldRenderer);
     if (!worldRenderer) return;
 
-    // Determine tile in front of player (or under center)
+    // Determine tile under player center
     const px = this.entity.x + this.entity.width/2;
     const py = this.entity.y + this.entity.height/2;
     
@@ -35,34 +65,165 @@ export class FarmingInteractor extends Component {
     const currentTile = worldRenderer.getTile(tileX, tileY);
     if (currentTile === -1) return;
 
-    if (currentTile === TILE_TYPES.GRASS) {
-      worldRenderer.setTile(tileX, tileY, TILE_TYPES.TILLED);
-    } else if (currentTile === TILE_TYPES.DIRT) {
-      worldRenderer.setTile(tileX, tileY, TILE_TYPES.TILLED);
-    } else if (currentTile === TILE_TYPES.TILLED) {
-      worldRenderer.setTile(tileX, tileY, TILE_TYPES.PLANTED);
-      
-      // Schedule growth
-      setTimeout(() => {
-        if (worldRenderer.getTile(tileX, tileY) === TILE_TYPES.PLANTED) {
-          worldRenderer.setTile(tileX, tileY, TILE_TYPES.GROWN);
-        }
-      }, 3000); // 3 seconds to grow
-      
-    } else if (currentTile === TILE_TYPES.GROWN) {
-      worldRenderer.setTile(tileX, tileY, TILE_TYPES.DIRT);
-      // Emit score/harvest event
-      if (this.entity.scene && this.entity.scene.onScore) {
-        this.entity.scene.score += 10;
-        this.entity.scene.onScore(this.entity.scene.score);
+    // Read selected seed from HUD dropdown
+    const seedSelect = document.getElementById('seed-select');
+    const selectedSeed = seedSelect ? seedSelect.value : 'wheat';
+
+    if (currentTile === TILE_TYPES.GRASS || currentTile === TILE_TYPES.DIRT) {
+      // TILL SOIL
+      if (this.consumeStamina(5)) {
+        worldRenderer.setTile(tileX, tileY, TILE_TYPES.TILLED);
+        this.triggerVibration(100);
+      } else {
+        this.showFloatMessage('Exhausted!', px, py, '#ff1744');
+      }
+    } 
+    else if (currentTile === TILE_TYPES.TILLED) {
+      // PLANT SEED
+      if (this.consumeStamina(3)) {
+        let plantType, grownType, growthDuration, label;
         
-        // Pop effect
-        this.entity.scene.engine.effects.emitParticles({
-          x: tileX * TILE_SIZE + TILE_SIZE/2,
-          y: tileY * TILE_SIZE + TILE_SIZE/2,
-          count: 15, color: '#ffb020', speed: 100, life: 0.5, size: 3
-        });
+        if (selectedSeed === 'corn') {
+          plantType = TILE_TYPES.PLANTED_CORN;
+          grownType = TILE_TYPES.GROWN_CORN;
+          growthDuration = 5000;
+          label = '⚡ Electric Corn';
+        } else if (selectedSeed === 'berry') {
+          plantType = TILE_TYPES.PLANTED_BERRY;
+          grownType = TILE_TYPES.GROWN_BERRY;
+          growthDuration = 8000;
+          label = '🍓 Mineral Berry';
+        } else {
+          plantType = TILE_TYPES.PLANTED_WHEAT;
+          grownType = TILE_TYPES.GROWN_WHEAT;
+          growthDuration = 3000;
+          label = '🌾 Wheat';
+        }
+
+        worldRenderer.setTile(tileX, tileY, plantType);
+        this.showFloatMessage(`Planted ${label}`, px, py - 20, '#00e5ff');
+
+        // Schedule growth
+        setTimeout(() => {
+          if (worldRenderer.getTile(tileX, tileY) === plantType) {
+            worldRenderer.setTile(tileX, tileY, grownType);
+            // Dynamic spark effect on grow
+            this.entity.scene.engine.effects.emitParticles({
+              x: tileX * TILE_SIZE + TILE_SIZE/2,
+              y: tileY * TILE_SIZE + TILE_SIZE/2,
+              count: 6, color: '#ffffff', speed: 40, life: 0.3, size: 2
+            });
+          }
+        }, growthDuration);
+      } else {
+        this.showFloatMessage('Exhausted!', px, py, '#ff1744');
+      }
+    } 
+    else if (
+      currentTile === TILE_TYPES.GROWN_WHEAT || 
+      currentTile === TILE_TYPES.GROWN_CORN || 
+      currentTile === TILE_TYPES.GROWN_BERRY
+    ) {
+      // HARVEST CROP
+      if (this.consumeStamina(1)) {
+        worldRenderer.setTile(tileX, tileY, TILE_TYPES.DIRT);
+        
+        let scoreReward = 0;
+        let skillXp = 0;
+        let skillType = 'logic';
+        let popColor = '#ffffff';
+        let label = '';
+
+        if (currentTile === TILE_TYPES.GROWN_WHEAT) {
+          scoreReward = 10;
+          skillXp = 2;
+          skillType = 'logic';
+          popColor = '#ffb300';
+          label = 'Wheat';
+        } else if (currentTile === TILE_TYPES.GROWN_CORN) {
+          scoreReward = 25;
+          skillXp = 5;
+          skillType = 'engineering';
+          popColor = '#00e5ff';
+          label = 'Electric Corn';
+        } else if (currentTile === TILE_TYPES.GROWN_BERRY) {
+          scoreReward = 50;
+          skillXp = 12;
+          skillType = 'strategy';
+          popColor = '#ff1744';
+          label = 'Mineral Berry';
+        }
+
+        if (this.entity.scene && this.entity.scene.onScore) {
+          this.entity.scene.score += scoreReward;
+          this.entity.scene.onScore(this.entity.scene.score);
+          
+          // Floating reward indicator
+          this.showFloatMessage(`+${scoreReward} Credits`, px, py - 30, '#00e5ff');
+          this.showFloatMessage(`+${skillXp} ${skillType.toUpperCase()}`, px, py - 10, popColor);
+          
+          // Emit score for SkillHex
+          this.dispatchInterconnectionEvent(label, scoreReward, skillXp, skillType);
+
+          // Pop effect
+          this.entity.scene.engine.effects.emitParticles({
+            x: tileX * TILE_SIZE + TILE_SIZE/2,
+            y: tileY * TILE_SIZE + TILE_SIZE/2,
+            count: 20, color: popColor, speed: 120, life: 0.6, size: 3.5
+          });
+
+          // Camera shake
+          const camera = this.entity.scene.engine.renderer.camera;
+          if (camera) {
+            camera.shakeX = (Math.random() - 0.5) * 8;
+            camera.shakeY = (Math.random() - 0.5) * 8;
+            setTimeout(() => { camera.shakeX = 0; camera.shakeY = 0; }, 100);
+          }
+        }
+      } else {
+        this.showFloatMessage('Exhausted!', px, py, '#ff1744');
       }
     }
+  }
+
+  showFloatMessage(text, x, y, color) {
+    if (this.entity.scene && typeof this.entity.scene.addFloatingText === 'function') {
+      this.entity.scene.addFloatingText(text, x, y, color);
+    }
+  }
+
+  triggerVibration(duration) {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(duration);
+    }
+  }
+
+  dispatchInterconnectionEvent(cropName, score, xp, skillType) {
+    const uid = localStorage.getItem('ecosystem_uid') || 'guest';
+    
+    // Delegate to the shared interconnection manager
+    Interconnection.syncToSkillHex(skillType, xp);
+    
+    const creditsKey = `via_user_${uid}_credits`;
+    const currentCredits = Number(localStorage.getItem(creditsKey) || 0);
+    const nextCredits = currentCredits + score;
+    localStorage.setItem(creditsKey, String(nextCredits));
+
+    const repKey = `via_user_${uid}_reputation`;
+    const nextRep = Number(localStorage.getItem(repKey) || 0);
+
+    // Dispatch events for cross-frame or general layout systems
+    const detail = {
+      uid,
+      cropName,
+      creditsEarned: score,
+      xpEarned: xp,
+      skillType,
+      timestamp: Date.now(),
+      newReputation: nextRep
+    };
+    
+    window.dispatchEvent(new CustomEvent('skillhex-score', { detail }));
+    window.dispatchEvent(new CustomEvent('orchard-harvest', { detail }));
   }
 }
