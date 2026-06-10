@@ -28,7 +28,26 @@
           <p class="subtitle">Sovereign Farming Simulator</p>
           <p class="desc">Till the soil, sow high-yield seeds, manage your stamina, and harvest crops to earn XP and credits for the ecosystem.</p>
           <button id="start-btn" class="btn primary glow">Enter Simulation</button>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Zayvora MVP - mobile base-building strategy loop"
+    />
+    <title>Zayvora MVP</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app-shell" aria-label="Zayvora playable MVP">
+      <section class="top-bar" aria-label="Resource HUD">
+        <div class="hud-card">⭐ <span id="player-level">Lv.1</span></div>
+        <div class="hud-card">
+          💰 Aether: <span id="aether-balance">0</span>
         </div>
+        <div class="hud-card">💎 <span id="chronium-balance">0</span></div>
+        <div class="hud-card">Fleet: <span id="fleet-count">🛩️ 0</span></div>
       </section>
 
       <!-- HUD Dashboard -->
@@ -99,11 +118,101 @@
           <p>Your session output: <span id="final-score" class="highlight-score">0</span></p>
           <p id="sso-sync-status" class="sync-status">🔄 Syncing ledger with Aporaksha...</p>
           <button id="play-again-btn" class="btn primary glow">Re-Initialize</button>
+      <section class="command-panel" aria-label="Base commands">
+        <button id="build-refinery-btn" class="btn primary" type="button">
+          Build Refinery (50 Aether)
+        </button>
+        <button id="train-airship-btn" class="btn" type="button">
+          Train Airship (100 Aether)
+        </button>
+        <button id="raid-clouds-btn" class="btn danger" type="button">
+          Raid Clouds ☁️
+        </button>
+        <button
+          id="edit-base-toggle-btn"
+          class="btn ghost"
+          type="button"
+          aria-pressed="false"
+        >
+          Edit Base: OFF
+        </button>
+      </section>
+
+      <section class="status-panel" aria-live="polite">
+        <p id="production-queue">Production queue: idle</p>
+        <p id="combat-log">
+          Generate Aether, build 🏭, train 🛩️, then raid the ☁️.
+        </p>
+      </section>
+
+      <section class="grid-shell" aria-label="Base grid">
+        <div
+          id="base-grid"
+          class="base-grid"
+          role="grid"
+          aria-label="10 by 10 base build grid"
+        ></div>
+      </section>
+
+      <section
+        id="building-modal"
+        class="building-modal"
+        aria-label="Building upgrade panel"
+        aria-live="polite"
+        hidden
+      >
+        <div class="modal-card">
+          <h2 id="modal-building-name">Building</h2>
+          <p id="modal-building-level">Level 1</p>
+          <p id="modal-building-production">Production: 0 → 0 Aether/tick</p>
+          <div class="modal-actions">
+            <button id="upgrade-building-btn" class="btn primary" type="button">
+              Upgrade
+            </button>
+            <button
+              id="close-building-modal-btn"
+              class="btn ghost"
+              type="button"
+            >
+              Close
+            </button>
+          </div>
         </div>
+      </section>
+
+      <section
+        id="offline-modal"
+        class="building-modal offline-modal"
+        aria-label="Offline progress summary"
+        aria-live="polite"
+        hidden
+      >
+        <div class="modal-card">
+          <h2>Welcome Back!</h2>
+          <p id="offline-modal-message">
+            Welcome Back! Your Citadel generated 0 Aether while you were away.
+          </p>
+          <div class="modal-actions">
+            <button
+              id="close-offline-modal-btn"
+              class="btn primary"
+              type="button"
+            >
+              Awesome!
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="debug-panel" aria-label="Debug controls">
+        <button id="wipe-save-btn" class="btn ghost" type="button">
+          Wipe Save
+        </button>
       </section>
     </main>
 
     <!-- Core Game Scripts -->
     <script type="module" src="./game.js"></script>
+    <script type="module" src="./src/main.js"></script>
   </body>
 </html>
